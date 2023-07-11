@@ -57,7 +57,7 @@ df = df[(df['continent']=='Asia') & (df['year'] >= 1932) & (df['year'] <= 2007)]
 fig = px.scatter(df, x='gdpPercap', y='lifeExp', size='pop', color='country', log_x=True, hover_name='country', animation_frame='year', range_x=[200, 100000], range_y=[20, 90])
 
 # Create a container for the chart
-chart_container = st.container()
+chart_container = st.beta_container()
 
 # Display the chart in the container
 with chart_container:
