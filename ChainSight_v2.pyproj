@@ -24,7 +24,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="1_Home.py" />
+    <Compile Include="Home.py" />
     <Compile Include="Foodmaxx_DG_format.py">
       <SubType>Code</SubType>
     </Compile>
