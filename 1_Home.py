@@ -12,7 +12,7 @@ import streamlit.components.v1 as components
 # Set page to wide display to give more room
 st.set_page_config(layout="wide")
 padding_top = 0
-st.snow() 
+#st.snow() 
 
 # This function sets the logo and company name inside the sidebar
 def add_logo(logo_path, width, height):
