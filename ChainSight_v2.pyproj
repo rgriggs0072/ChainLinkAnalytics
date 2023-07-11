@@ -13,6 +13,7 @@
     <Name>ChainSight_v2</Name>
     <RootNamespace>ChainSight_v2</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>MSBuild|ChainLinkAnalytics|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -79,6 +80,17 @@
     <Content Include="pages\5_Load_Customer_Data.py" />
     <Content Include="css\style.css" />
     <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="ChainLinkAnalytics\">
+      <Id>ChainLinkAnalytics</Id>
+      <Version>3.10</Version>
+      <Description>ChainLinkAnalytics (Python 3.10 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
