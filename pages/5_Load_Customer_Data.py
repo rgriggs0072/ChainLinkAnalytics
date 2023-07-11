@@ -87,7 +87,9 @@ def format_Customers_Dataload(workbook):
     # Select the Customers sheet
     ws = workbook['Customers']
 
-    
+    # Remove filters
+    ws.auto_filter.ref = None
+
     # Create a new column for store name
     ws.insert_cols(3)
     #ws.cell(row=1, column=3, value='STORE NAME')
@@ -127,10 +129,16 @@ def format_Customers_Dataload(workbook):
     
 
 
-    # Remove all Hyphens in column E
+    # Remove all apostrophes (') from column E
     for cell in ws['E']:
         if cell.value is not None and isinstance(cell.value, str):
             cell.value = cell.value.replace("'", "")
+
+    # Remove all apostrophes (') from column B 
+    for cell in ws['B']:
+        if cell.value is not None and isinstance(cell.value, str):
+            cell.value = cell.value.replace("'", "")
+
 
 
    

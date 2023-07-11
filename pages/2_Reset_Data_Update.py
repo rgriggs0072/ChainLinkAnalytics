@@ -20,9 +20,9 @@ from FoodMaxx_resetSH_format import format_FOODMAXX_schedule
 from Luckys_resetSH_format import format_LUCKYS_Schedule
 from Savemart_resetSH_format import format_Savemart_Schedule
 from Sprouts_resetSH_format import format_SPROUTS_Schedule
+from Smart_Final_resetSH_format import format_SMARTFINAL_Schedule
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
-from openpyxl.styles import PatternFill, Border, Side, Font
 import datetime
 from io import BytesIO
 import numpy as np
@@ -210,6 +210,8 @@ with file_container:
             elif selected_option == 'SPROUTS': #ADD THIS CONDITION FOR 'SPROUTS' OPTION
                 formatted_workbook = format_SPROUTS_Schedule(workbook)
 
+            elif selected_option == 'SMART_FINAL': #ADD THIS CONDITION FOR 'SMART & FINAL' OPTION
+                 formatted_workbook =  format_SMARTFINAL_Schedule(workbook)
 
             else:
                 # Call other formatting functions for different options
@@ -217,7 +219,7 @@ with file_container:
                 formatted_workbook = workbook  # Use the original workbook
 
         # Create a new filename based on the selected option
-        new_filename = f"formatted_{selected_option}_spreadsheet.xlsx"
+        new_filename = f"formatted_{selected_option}_RESET_spreadsheet.xlsx"
 
    
 
@@ -325,7 +327,7 @@ def write_to_snowflake(df, warehouse, database, schema):
         )
 
         # Create a table if it doesn't exist
-        table_name = "RESET_TEMP"
+        table_name = "RESET_SCHEDULE_TEST"
         if not table_exists(conn, schema, table_name):
             create_table_query = """
             CREATE TABLE {schema}.{table_name} (

@@ -1,5 +1,5 @@
-from msilib.schema import File
-from turtle import width
+﻿#from msilib.schema import File #can be removed
+#from turtle import width #can be removed
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -16,9 +16,11 @@ from Raleys_DG_format import format_RALEYS_DistroGrid
 from Safeway_DG_format import format_SAFEWAY_DistroGrid
 from Wholefoods_DG_format import format_WHOLEFOODS_DistroGrid
 from Sprouts_DG_format import format_SPROUTS_DistroGrid
+from Smart_Final_DG_format import format_SMART_FINAL_DistroGrid
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
-from streamlit_extras.app_logo import add_logo
+# from streamlit_extras.app_logo import add_logo #can be removed
+import datetime
 
 
 
@@ -124,13 +126,13 @@ file_container = st.container()
 # ASSISGN AND Add a title to the container
 #===================================================================================================================
 
-    
+with file_container:
+     st.subheader(":blue[Distro Grid Fomatting Utility]")
 
 
 #===================================================================================================================
 # END ASSISGN AND Add a title to the container
 #===================================================================================================================
-
 
 
     # Retrieve options from Snowflake table
@@ -147,7 +149,7 @@ if not options:
     st.warning("No options available. Please add options to the list.")
 else:
     # Create the dropdown in Streamlit
-    with file_container:
+    
         selected_option = st.selectbox(':red[Select the Chain Distro Grid to format]', options + ['Add new option...'], key="existing_option")
 
         # Check if the selected option is missing and allow the user to add it
@@ -179,15 +181,16 @@ else:
 #======================================================================================================================
 
 # Add the file uploader inside the container
-with file_container:
-    uploaded_file = st.file_uploader(":red[Browse or drag here Distribution Grid to Format]", type=["xlsx"])
+
+    
+uploaded_file = st.file_uploader(":red[Browse or drag here the Distribution Grid to Format]", type=["xlsx"])
 
 
     # Add horizontal line
-    st.markdown("<hr>", unsafe_allow_html=True)
 
 
-    formatted_workbook = None  # Initialize the variable
+
+formatted_workbook = None  # Initialize the variable
 
         
 with file_container:
@@ -221,13 +224,17 @@ with file_container:
             elif selected_option == 'SPROUTS': #ADD THIS CONDITION FOR 'SPROUTS' OPTION
                 formatted_workbook = format_SPROUTS_DistroGrid(workbook)
 
-            elif selected_option == 'RALEYS': 
+            elif selected_option == 'RALEYS': #ADD THIS CONDITION FOR 'RALEYS' OPTION
                 formatted_workbook = format_RALEYS_DistroGrid(workbook)
 
-            elif selected_option == 'WHOLEFOODS':
+            elif selected_option == 'WHOLEFOODS': #ADD THIS CONDITION FOR 'WHOLEFOODS' OPTION
                 formatted_workbook = format_WHOLEFOODS_DistroGrid(workbook)
 
+            elif selected_option == 'SMART_FINAL': #ADD THIS CONDITION FOR 'SMART_FINAL' OPTION
+                formatted_workbook = format_SMART_FINAL_DistroGrid(workbook)
 
+
+                
             else:
                 # Call other formatting functions for different options
                 # Add your code here for other formatting functions
@@ -237,7 +244,7 @@ with file_container:
             st.write("I am back")
             new_filename = f"formatted_{selected_option}_spreadsheet.xlsx"
 
-            st.write(new_filename)
+            
 
 
 # Check if the workbook was successfully formatted
@@ -279,7 +286,8 @@ snowflake_file_container = st.container()
 
 # Add a title to the container
 with snowflake_file_container:
-    st.subheader(":blue[Grid Write to Snowflake Uploader]")
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.subheader(":blue[Write Distribution Grid to Snowflake Utility]")
 
 with snowflake_file_container:
     # create file uploader
@@ -293,10 +301,7 @@ for uploaded_file in uploaded_files:
     ## Get sheet names from ExcelFile object
     sheet_names = excel_file.sheet_names
 
-    ## Display workbook name and sheet names in Streamlit
-    #workbook_name = uploaded_file.name
-    #st.write(f"Workbook Name: {workbook_name}")
-    #st.write("Sheet Names:", sheet_names)
+    
 
     # Display DataFrame for each sheet in Streamlit
     for sheet_name in sheet_names:
@@ -307,19 +312,6 @@ for uploaded_file in uploaded_files:
 # End of code to create code uploader in preparation to write to snowflake
 #==========================================================================================================
 
-        # Load Snowflake credentials from the secrets.toml file
-snowflake_creds = st.secrets["snowflake"]
-
-# Establish a new connection to Snowflake
-conn = snowflake.connector.connect(
-    account=snowflake_creds["account"],
-    user=snowflake_creds["user"],
-    password=snowflake_creds["password"],
-    warehouse=snowflake_creds["warehouse"],
-    database=snowflake_creds["database"],
-    schema=snowflake_creds["schema"]
-
-)
 
 
 
@@ -353,7 +345,7 @@ for uploaded_file in uploaded_files:
 
    
 
-        # Write DataFrame to Snowflake on button click
+    # Write DataFrame to Snowflake on button click
     button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
     if st.button("Import into Snowflake", key=button_key):
         with st.spinner('Uploading data to Snowflake ...'):
@@ -386,16 +378,7 @@ for uploaded_file in uploaded_files:
         VALUES ({placeholders})
         """
 
-        # Establish a connection to Snowflake
-        snowflake_creds = st.secrets["snowflake"]
-        conn = snowflake.connector.connect(
-            account=snowflake_creds["account"],
-            user=snowflake_creds["user"],
-            password=snowflake_creds["password"],
-            warehouse=snowflake_creds["warehouse"],
-            database=snowflake_creds["database"],
-            schema=snowflake_creds["schema"]
-        )
+        
 
         # Chunk the DataFrame into smaller batches
         chunk_size = 1000  # Adjust the chunk size as per your needs
@@ -411,3 +394,74 @@ for uploaded_file in uploaded_files:
         conn.close()
 
     st.write("Data has been imported into Snowflake table for Sheet:", sheet_name, "in workbook:", uploaded_file.name)
+
+
+def create_replace_distro_grid_table():
+    
+    
+    # Get the current date and time
+    current_date_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Define the table names
+    backup_table_name = f"DISTRO_GRID_{current_date_time}"
+    distro_grid_table_name = "DISTRO_GRID_testing"
+    distro_grid_temp_table_name = "DISTRO_GRID_TEMP"
+    
+    # Create a backup table with the current date and time
+    create_backup_query = f"CREATE OR REPLACE TABLE {backup_table_name} AS SELECT * FROM {distro_grid_table_name};"
+    
+    # Truncate the distro_grid table
+    truncate_distro_grid_query = f"TRUNCATE TABLE {distro_grid_table_name};"
+    
+    # Move data from distro_grid_temp to distro_grid
+    move_data_query = f"INSERT INTO {distro_grid_table_name} SELECT * FROM {distro_grid_temp_table_name};"
+    
+    # Truncate the distro_grid_temp table
+    truncate_distro_grid_temp_query = f"TRUNCATE TABLE {distro_grid_temp_table_name};"
+    
+    # Execute the queries
+    cursor = conn.cursor()
+    cursor.execute(create_backup_query)
+    cursor.execute(truncate_distro_grid_query)
+    cursor.execute(move_data_query)
+    cursor.execute(truncate_distro_grid_temp_query)
+    
+    # Update the metadata table
+    metadata_table_name = "METADATA"  # Replace with your metadata table name
+    status_query = f"""
+    UPDATE {metadata_table_name}
+    SET STATUS = CASE
+        WHEN STATUS = 'ACTIVE' THEN 'ARCHIVE'
+        ELSE 'ACTIVE'
+    END
+    WHERE TABLE_NAME = '{distro_grid_table_name}'
+    """
+    cursor.execute(status_query)
+    
+    # Close the connection
+    conn.close()
+
+#====================================================================================================================
+# The code below adds a button to th sidebar that will take the distribution grid live wipping out all old data
+#====================================================================================================================
+
+
+# Streamlit app code
+st.sidebar.subheader(":blue[Distro Grid Go-Live Utility]")
+
+# Create a form in the Streamlit sidebar
+with st.sidebar.form("go_live_form"):
+    st.subheader("Go Live with New Distribution Grid")
+    st.write(":red[By clicking 'Go Live with New Distribution Grid', you will delete your current distro_grid table and perform the data migration.]")
+    st.write(":red[This action cannot be undone.]")
+    submitted = st.form_submit_button("Go Live with Distribution Grid Go Live")
+    
+    # If the form is submitted, display a confirmation dialog
+    if submitted:
+        confirmation = st.warning("Are you sure you want to proceed? This action cannot be undone.",icon="⚠️")
+        if confirmation.button("Yes, I want to proceed"):
+            result = create_replace_distro_grid_table()
+            if result:
+                st.sidebar.success("New Distro_Grid table created/replaced and data moved successfully!")
+            else:
+                st.sidebar.error("An error occurred while creating/replacing the Distro_Grid table and moving data.")

@@ -12,6 +12,7 @@
     <OutputPath>.</OutputPath>
     <Name>ChainSight_v2</Name>
     <RootNamespace>ChainSight_v2</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -48,6 +49,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Savemart_resetSH_format.py" />
+    <Compile Include="Smart_Final_DG_format.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Smart_Final_resetSH_format.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Sprouts_DG_format.py">
       <SubType>Code</SubType>
     </Compile>
@@ -71,6 +78,7 @@
   <ItemGroup>
     <Content Include="pages\5_Load_Customer_Data.py" />
     <Content Include="css\style.css" />
+    <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
