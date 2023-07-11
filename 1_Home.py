@@ -4,7 +4,7 @@ import streamlit as st
 #from streamlit_option_menu import option_menu
 import pandas as pd
 from PIL import Image
-import plotly.express as px
+#import plotly.express as px
 import numpy as np
 import time
 import streamlit.components.v1 as components
