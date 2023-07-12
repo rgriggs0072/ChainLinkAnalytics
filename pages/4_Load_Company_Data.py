@@ -1,4 +1,3 @@
-from tkinter.ttk import Style
 import streamlit as st
 import pandas as pd
 from PIL import Image

@@ -2,7 +2,6 @@
 from importlib.resources import Package
 from multiprocessing.connection import wait
 from this import s
-from tkinter import W
 import snowflake.connector
 import streamlit as st
 import pandas as pd
