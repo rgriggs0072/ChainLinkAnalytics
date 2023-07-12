@@ -2,7 +2,6 @@
 from cgitb import text
 from pickle import TRUE
 from this import s
-from turtle import color
 import snowflake.connector
 import streamlit as st
 import pandas as pd
