@@ -42,6 +42,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Raleys_resetSH_format.py" />
+    <Compile Include="Reset_Schedule_to_Snowflake_Uploader.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Safeway_DG_format.py">
       <SubType>Code</SubType>
     </Compile>

@@ -6,7 +6,8 @@ from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
 import openpyxl.utils.datetime as xl_datetime
 import datetime
-
+from openpyxl import Workbook
+from openpyxl.styles import NamedStyle
 
 
 #==================================================================================================================
@@ -16,8 +17,29 @@ import datetime
 ##===============================================================================================================
 
 
-def format_RALEYS_Schedule(workbook):
+# Helper function to convert time from text to datetime object
+def text_to_time(text):
+    try:
+        # Convert the cell value to a string
+        text = str(text)
+        time_obj = datetime.datetime.strptime(text, '%I:%M %p')
+        return time_obj.strftime('%H:%M %p')  # Convert back to the desired string format
+    except ValueError:
+        try:
+            # Try converting numeric time fraction to time
+            time_fraction = float(text)
+            hours = int(time_fraction * 24)
+            minutes = int((time_fraction * 24 * 60) % 60)
+            time_obj = datetime.time(hours, minutes)
+            return time_obj.strftime('%H:%M %p')  # Convert to the desired string format
+        except ValueError:
+            return text
 
+
+
+
+def format_RALEYS_Schedule(workbook):
+    import datetime
     st.write("YAY YOU CALLED ME Raleys")
     # Delete all sheets except Reset Dates
     for sheet_name in workbook.sheetnames:
@@ -30,6 +52,9 @@ def format_RALEYS_Schedule(workbook):
     
     # Rename the sheet to "Reset_Dates"
     ws.title = 'Reset_Dates'
+
+    # Delete row 2-5
+    ws.delete_rows(1, 5)
 
     # Create new column A to hold store number
     ws.insert_cols(1)
@@ -49,8 +74,7 @@ def format_RALEYS_Schedule(workbook):
     # Create new column I to hold store number
     ws.insert_cols(10)
 
-    # Delete row 2-5
-    ws.delete_rows(1, 5)
+    
 
      # Iterate through the rows starting from row 2
     for index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
@@ -109,19 +133,23 @@ def format_RALEYS_Schedule(workbook):
     # Remove all TBD Remodel from column I
     for cell in ws['I']:
         if cell.value is not None:
-            cell.value = str(cell.value).replace('TBD REMODEL', '')
+            cell.value = str(cell.value).replace('TBD REMODEL', '1/1/1900')
 
     # Remove all - from column I
     for cell in ws['I']:
         if cell.value is not None:
-            cell.value = str(cell.value).replace('-', '')
+            cell.value = str(cell.value).replace('-', '1/1/1900')
+
+    # Remove all - from column J
+    for cell in ws['J']:
+        if cell.value is not None:
+            cell.value = str(cell.value).replace('-', '6:00 AM')
 
     
 
         
 
   
-    # Check if the worksheet has any data
     if ws.dimensions is not None:
         # Iterate over column I to convert text to number and format as date
         for row in ws.iter_rows(min_row=2, min_col=9, max_col=9):
@@ -130,10 +158,12 @@ def format_RALEYS_Schedule(workbook):
                     try:
                         cell.value = float(cell.value)
                         cell.number_format = 'mm/dd/yyyy'
+                        print(f"Converting cell {cell.coordinate} to float: {cell.value}")
                         if cell.value == 1:
                             cell.value = datetime.datetime(1900, 1, 1)
                         else:
                             cell.value = datetime.datetime(1900, 1, 1) + datetime.timedelta(days=(cell.value - 1))
+                        print(f"Resulting value for cell {cell.coordinate}: {cell.value}")
                     except ValueError:
                         print(f"Failed to convert cell {cell.coordinate} to float.")
 
@@ -145,19 +175,19 @@ def format_RALEYS_Schedule(workbook):
         ws.cell(row=index, column=10, value=row[15])    
 
 
-        from openpyxl.styles import NamedStyle
+    from openpyxl.styles import NamedStyle
 
-    # insert time in empty cells column J
-    # Define the time value to insert
-    time_value = "07:00 AM"
+    ## insert time in empty cells column J
+    ## Define the time value to insert
+    #time_value = "07:00 AM"
 
-    # Iterate over the cells in column J
-    for row in ws.iter_rows(min_row=2, min_col=10, max_col=10):
-        for cell in row:
-            # Check if the cell is empty
-            if cell.value is "":
-                # Assign the time value to the cell
-                cell.value = time_value
+    ## Iterate over the cells in column J
+    #for row in ws.iter_rows(min_row=2, min_col=10, max_col=10):
+    #    for cell in row:
+    #        # Check if the cell is empty
+    #        if cell.value is "":
+    #            # Assign the time value to the cell
+    #            cell.value = time_value
 
 
    
@@ -165,15 +195,15 @@ def format_RALEYS_Schedule(workbook):
  
 
 
-    # Create a named style for the time format
-    time_format = NamedStyle(name='time_format2')
-    time_format.number_format = 'hh:mm AM/PM'
+    ## Create a named style for the time format
+    #time_format = NamedStyle(name='time_format2')
+    #time_format.number_format = 'hh:mm AM/PM'
 
-    # Apply the time format to the cells
-    for row in ws.iter_rows(min_row=2, min_col=10, max_col=10):
-        for cell in row:
-            if cell.value:
-                cell.style = time_format
+    ## Apply the time format to the cells
+    #for row in ws.iter_rows(min_row=2, min_col=10, max_col=10):
+    #    for cell in row:
+    #        if cell.value:
+    #            cell.style = time_format
 
 
 # Remove fill for all columns in row 1
@@ -310,18 +340,35 @@ def format_RALEYS_Schedule(workbook):
             # Clear the original cell in column T
             cell.value = None
 
-    
-
-
-     # Create a named style for the time format
-    time_format = NamedStyle(name='time_format3')
+    # Create a named style for the time format
+    time_format = NamedStyle(name='time_format')
     time_format.number_format = 'hh:mm AM/PM'
 
     # Apply the time format to the cells
     for row in ws.iter_rows(min_row=2, min_col=11, max_col=11):
         for cell in row:
             if cell.value:
+                # Convert the value to the desired time format string
+                cell.value = text_to_time(cell.value)
                 cell.style = time_format
+
+        
+            
+            # Apply the time format to the cells
+    for row in ws.iter_rows(min_row=2, min_col=11, max_col=11):
+        for cell in row:
+            if cell.value:
+                cell.value = text_to_time(cell.value)
+
+    # # Create a named style for the time format
+    #time_format = NamedStyle(name='time_format3')
+    #time_format.number_format = 'hh:mm AM/PM'
+
+    ## Apply the time format to the cells
+    #for row in ws.iter_rows(min_row=2, min_col=11, max_col=11):
+    #    for cell in row:
+    #        if cell.value:
+    #            cell.style = time_format
 
     
 

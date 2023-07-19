@@ -104,7 +104,7 @@ def fetch_product_analysis_data():
 #====================================================================================================================================
 
 # Button to fetch and display the product analysis data
-if st.button("Fetch Product Analysis Data"): 
+if st.button("Fetch Product Analysis Pivot Data"): 
     with st.spinner('Getting Product Analysis Data From Snowflake ...'):
     # Fetch the data
      df = fetch_product_analysis_data()

@@ -162,7 +162,7 @@ def format_sales_report(workbook):
 
 
 # Upload the workbook
-uploaded_file = st.file_uploader("Upload freshly ran sales report from Encompass", type=["xlsx", "xls"])
+uploaded_file = st.file_uploader(":red[Upload freshly ran sales report from Encompass]", type=["xlsx", "xls"])
 
 if uploaded_file is not None:
     # Load the workbook
@@ -244,7 +244,7 @@ def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
 # Create uploader for formatted sales report create dataframe and call write to snowflake function
 #=====================================================================================================
 # create file uploader
-uploaded_file = st.file_uploader("UPLOAD CURRENT SALES REPORT AFTER IT HAS BEEN FORMATED", type=["xlsx"])
+uploaded_file = st.file_uploader(":red[UPLOAD CURRENT SALES REPORT AFTER IT HAS BEEN FORMATED]", type=["xlsx"])
 
 # check if file was uploaded
 if uploaded_file:

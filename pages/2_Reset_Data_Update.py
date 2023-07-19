@@ -21,6 +21,16 @@ from Luckys_resetSH_format import format_LUCKYS_Schedule
 from Savemart_resetSH_format import format_Savemart_Schedule
 from Sprouts_resetSH_format import format_SPROUTS_Schedule
 from Smart_Final_resetSH_format import format_SMARTFINAL_Schedule
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_SAFEWAY_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_LUCKY_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_WALMART_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_RALEYS_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_FOODMAXX_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_SMART_FINAL_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_SPROUTS_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_TARGET_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_WHOLEFOODS_data
+from Reset_Schedule_to_Snowflake_Uploader import upload_reset_SCH_SAVEMART_data
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
 import datetime
@@ -28,7 +38,7 @@ from io import BytesIO
 import numpy as np
 
 
-
+    
 
 
 #====================================================================================================================
@@ -134,15 +144,13 @@ if 'option_added' not in st.session_state:
     st.session_state.option_added = False
 
 #===================================================================================================================
-# ASSISGN AND Add a title to the container
+# # Option selection for sheet to format for which chain
 #===================================================================================================================
 with file_container:
     st.subheader(":blue[Reset Schedule File Format Uploader]")
 
 
-#===================================================================================================================
-# END ASSISGN AND Add a title to the container
-#===================================================================================================================
+
 # Check if options are available
     if not options:
         st.warning("No options available. Please add options to the list.")
@@ -172,6 +180,10 @@ with file_container:
         # Display the selected option
         st.write(f"You selected: {selected_option}")
 
+#===================================================================================================================
+# END Option selection for sheet to format for which chain
+#===================================================================================================================
+
 
     # File uploader for chain reset schedule spreadsheets
     uploaded_file = st.file_uploader(":red[Upload reset schedule spreadsheet to be formatted]", type=["xlsx"])
@@ -182,7 +194,7 @@ with file_container:
         
 
     if st.button("Reformat Spreadsheet"):
-        with st.spinner('Starting Formatting of Spreadsheet ...'):
+        with st.spinner('Starting Format of Spreadsheet ...'):
             if uploaded_file is None:
                 st.warning("Please upload a spreadsheet first.")
             else:
@@ -192,30 +204,30 @@ with file_container:
             # Call the format_raleys_Schedule function for 'Raleys' option
             if selected_option == 'RALEYS':
                 formatted_workbook = format_RALEYS_Schedule(workbook)
+            # Call the format_SAFEWAY_Schedule function for 'Safeway' option
             elif selected_option == 'SAFEWAY':  # Add this condition for 'SAFEWAY' option
                 formatted_workbook = format_SAFEWAY_Schedule(workbook)
-
+            # Call the format_WALMART_Schedule function for 'Walmart' option
             elif selected_option == 'WALMART': #ADD THIS CONDITION FOR 'WALMART' OPTION
                 formatted_workbook = format_WALMART_schedule(workbook)
-
+            # Call the format_FOODMAXX_Schedule function for 'FoodMaxx' option
             elif selected_option == 'FOODMAXX': #ADD THIS CONDITION FOR 'WALMART' OPTION
                 formatted_workbook = format_FOODMAXX_schedule(workbook)
-
+            # Call the format_LUCKYS_Schedule function for 'Luckys' option
             elif selected_option == 'LUCKYS': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
                 formatted_workbook = format_LUCKYS_Schedule(workbook)
-
+            # Call the format_Savemart_Schedule function for 'Savemart' option
             elif selected_option == 'SAVEMART': #ADD THIS CONDITION FOR 'Save Mart' OPTION
                 formatted_workbook = format_Savemart_Schedule(workbook)
-
+            # Call the format_SPROUTS_Schedule function for 'Sprouts' option
             elif selected_option == 'SPROUTS': #ADD THIS CONDITION FOR 'SPROUTS' OPTION
                 formatted_workbook = format_SPROUTS_Schedule(workbook)
-
+            # Call the format_SMART_FINAL_Schedule function for 'Smart & Final' option
             elif selected_option == 'SMART_FINAL': #ADD THIS CONDITION FOR 'SMART & FINAL' OPTION
                  formatted_workbook =  format_SMARTFINAL_Schedule(workbook)
 
             else:
                 # Call other formatting functions for different options
-                # Add your code here for other formatting functions
                 formatted_workbook = workbook  # Use the original workbook
 
         # Create a new filename based on the selected option
@@ -311,70 +323,7 @@ def create_table(conn, schema, table_name, column_names, column_types):
 
 
 
-def write_to_snowflake(df, warehouse, database, schema):
-    try:
-        # Load Snowflake credentials from the secrets.toml file
-        snowflake_creds = st.secrets["snowflake"]
 
-        # Establish a new connection to Snowflake
-        conn = snowflake.connector.connect(
-            account=snowflake_creds["account"],
-            user=snowflake_creds["user"],
-            password=snowflake_creds["password"],
-            warehouse=snowflake_creds["warehouse"],
-            database=snowflake_creds["database"],
-            schema=snowflake_creds["schema"]
-        )
-
-        # Create a table if it doesn't exist
-        table_name = "RESET_SCHEDULE_TEST"
-        if not table_exists(conn, schema, table_name):
-            create_table_query = """
-            CREATE TABLE {schema}.{table_name} (
-                CHAIN_NAME VARCHAR(30),
-                STORE_NUMBER NUMBER(10,0),
-                STORE_NAME VARCHAR(50),
-                PHONE VARCHAR(15),
-                CITY VARCHAR(50),
-                ADDRESS VARCHAR(50),
-                STATE VARCHAR(2),
-                COUNTY VARCHAR(30),
-                TEAM_LEAD VARCHAR(130),
-                RESET_DATE DATE,
-                RESET_TIME TIME,
-                STATUS VARCHAR(50),
-                NOTES VARCHAR(60)
-            )
-            """.format(schema=schema, table_name=table_name)
-            cursor = conn.cursor()
-            cursor.execute(create_table_query)
-            cursor.close()
-
-        # Write DataFrame to Snowflake
-        cursor = conn.cursor()
-
-        # Replace 'NAN' values with NULL
-        df = df.replace('NAN', np.nan).fillna(value='', method=None)
-
-        # Convert timestamp values to strings
-        df = df.astype({'RESET_DATE': str, 'RESET_TIME': str})
-
-        # Generate the SQL query
-        placeholders = ', '.join(['%s'] * len(df.columns))
-        insert_query = f"""
-        INSERT INTO {schema}.{table_name}
-        VALUES ({placeholders})
-        """
-
-        # Execute the query with parameterized values
-        cursor.executemany(insert_query, df.values.tolist())
-        cursor.close()
-
-        conn.close()
-
-        #st.success("Data has been successfully written to Snowflake.")
-    except Exception as e:
-        st.error(f"An error occurred while writing to Snowflake: {str(e)}")
 
 
 
@@ -382,14 +331,58 @@ def write_to_snowflake(df, warehouse, database, schema):
 # create file uploader
 #uploaded_file = st.file_uploader(":red[Browse or selected formatted reset schedule excel sheet]", type=["xlsx"])
 
+#===============================================================================================================================
+# Utility to process formatted Reset Schedule to Snowflake depending on which chain you are working on
+#===============================================================================================================================
 
 
 with file_container:
-    # Add horizontal line
+
+    
+        # Add horizontal line
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.subheader(":blue[Select or Drag Formatted File to Upload to Snowflake]")
+    st.subheader(":blue[Reset Schedule File to Upload to Snowflake Utility]")
+
+    # Store the selected_option in session state
+    if "selected_option" not in st.session_state:
+        st.session_state.selected_option = None
+    
+    # Check if options are available
+    if not options:
+        st.warning("No options available. Please add options to the list.")
+    else:
+        # Create the dropdown in Streamlit
+        selected_option = st.selectbox(':red[Select the Chain Reset Schedule to load to Snowflake]', options + ['Add new option...'], key="select_snowflake_option")
+
+    # Check if the selected option is missing and allow the user to add it
+    if selected_option == 'Add new option...':
+        st.write("You selected: Add new option...")
+        
+        # Show the form to add a new option
+        with st.form(key='add_option_form', clear_on_submit=True):
+            new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
+            submit_button = st.form_submit_button('Add Option')
+            
+            if submit_button and new_option:
+                options.append(new_option)
+                update_options(options)
+                st.success('Option added successfully!')
+                st.session_state.option_added = True
+
+        # Clear the text input field
+        st.session_state.new_option = ""
+        
+    else:
+        # Display the selected option
+        st.write(f"You selected: {selected_option}")
+
+    # Store selected_option in session state
+    st.session_state.selected_option = selected_option
+
+
+
     # create file uploader
-    uploaded_files = st.file_uploader("Browse or select formatted reset schedule excel sheets", type=["xlsx"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader(":red[Browse or select formatted reset schedule excel sheet To Upload to Snowflake]", type=["xlsx"], accept_multiple_files=True)
 
     # Process each uploaded file
     for uploaded_file in uploaded_files:
@@ -410,27 +403,49 @@ with file_container:
 
         #    # Modify DataFrame values directly to replace 'NAN' with empty string ''
             df = df.replace('NAN', np.nan)
+            #st.write(df)
 
-        #    # Display DataFrame in Streamlit
-        #    st.write(f"Sheet Name: {sheet_name}")
-        #    st.dataframe(df)
+        #    
 
-            # Write DataFrame to Snowflake on button click
-            button_key = f"import_button_{workbook_name}_{sheet_name}"
-            if st.button("Import into Snowflake", key=button_key):
-                with st.spinner('Uploading data to Snowflake ...'):
-                    # Write DataFrame to Snowflake
-                    write_to_snowflake(df, "COMPUTE_WH", "datasets", "DATASETS")
-
-                st.write("Data has been imported into Snowflake table for Sheet:", sheet_name, "in workbook:", workbook_name)
-
-
-
-
+    # Write DataFrame to Snowflake on button click
+        button_key = f"import_button_{workbook_name}_{sheet_name}"
+        if st.button("Import into Snowflake", key=button_key):
+            with st.spinner('Uploading data to Snowflake ...'):
+                # Write DataFrame to Snowflake based on the selected store
+                if selected_option == "SAFEWAY":
+                    upload_reset_SCH_SAFEWAY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "LUCKYS":
+                    upload_reset_SCH_LUCKY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "WALMART":
+                    upload_reset_SCH_WALMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                    # Add more if-else statements for other stores as needed
+                elif selected_option == "RALEYS":
+                    upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                    # Add more if-else statements for other stores as needed
+                elif selected_option == "FOODMAXX":
+                    upload_reset_SCH_FOODMAXX_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "SMART_FINAL":
+                    upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "SPROUTS":
+                    upload_reset_SCH_SPROUTS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "TARGET":
+                    upload_reset_SCH_TARGET_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "WHOLEFOODS":
+                    upload_reset_SCH_WHOLEFOODS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                elif selected_option == "SAVEMART":
+                    upload_reset_SCH_SAVEMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+                    # Add more if-else statements for other stores as needed
+                else:
+                    # Call other formatting functions for different options
+                    #st.write("test")#formatted_workbook = workbook  # Use the original workbook    
+                    # Call other formatting functions for different options
+                    formatted_workbook = workbook  # Use the original workbook
+                    
+                    
 #======================================================================================================================
 # This chunk of code takes the Supplier by county pivot table and formats in so it can be uploaded to snowflake
 #=======================================================================================================================
-
+#
 def format_supplier_by_county(file_content):
     df_formatted = None
 
@@ -453,19 +468,8 @@ def format_supplier_by_county(file_content):
 # This function will write the Supplier County to a snowflake table for gap report county validation
 #====================================================================================================
 def write_to_snowflake(df_content):
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
-
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
-
+   
+    
     # Create a cursor object to execute SQL queries
     cursor = conn.cursor()
 
@@ -526,13 +530,7 @@ with file_container:
             stream.seek(0)
             st.download_button(label="Download formatted Supplier by County", data=stream.read(), file_name=new_csv_file, mime='application/vnd.ms-excel')
     
-        #st.write("After formatting - df_formatted:")
-        #st.write(st.session_state.df_formatted)
-
-
-    ## Display the formatted DataFrame if available
-    #if st.session_state.df_formatted is not None:
-    #    st.dataframe(st.session_state.df_formatted)
+        
 
 
 #=================================================================================================
@@ -555,62 +553,7 @@ with file_container:
 # Once the table is creating it will move all the data in the RESET_TEMP table into the RESET_SCHEDULE
 # Table so the new resets can now be reported on and added to the Gap Report
 #=================================================================================================
-def create_replace_reset_schedule_table():
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
-
-    # Create a new table RESET_SCHEDULE or replace if it already exists
-    create_table_query = """
-    CREATE OR REPLACE TABLE RESET_SCHEDULE_test (
-        CHAIN_NAME VARCHAR(30),
-        STORE_NUMBER NUMBER(10,0),
-        STORE_NAME VARCHAR(50),
-        PHONE VARCHAR(15),
-        CITY VARCHAR(50),
-        ADDRESS VARCHAR(50),
-        STATE VARCHAR(2),
-        COUNTY VARCHAR(30),
-        TEAM_LEAD VARCHAR(130),
-        RESET_DATE DATE,
-        RESET_TIME TIME,
-        STATUS VARCHAR(150),
-        NOTES VARCHAR(160)
-    )
-    """
-    cursor = conn.cursor()
-    cursor.execute(create_table_query)
-    cursor.close()
-
-    # Move data from RESET_TEMP to RESET_SCHEDULE
-    move_data_query = """
-    INSERT INTO RESET_SCHEDULE_test
-    SELECT *
-    FROM RESET_TEMP
-    """
-    cursor = conn.cursor()
-    cursor.execute(move_data_query)
-    cursor.close()
-
-
-    # Truncate the RESET_TEMP table
-    truncate_table_query = """
-    TRUNCATE TABLE RESET_TEMP
-    """
-    cursor = conn.cursor()
-    cursor.execute(truncate_table_query)
-    cursor.close()
-
-    conn.close()
 
    
 #===============================================================================================
@@ -618,9 +561,9 @@ def create_replace_reset_schedule_table():
 #===============================================================================================
 
 
-# Create a button in the Streamlit side panel
-if st.sidebar.button(":blue[Go Live with Reset Schedule]"):
-    create_replace_reset_schedule_table()
-    st.success("Reset Schedule table created/replaced and data moved successfully!")
+## Create a button in the Streamlit side panel
+#if st.sidebar.button(":blue[Go Live with Reset Schedule]"):
+#    create_replace_reset_schedule_table()
+#    st.success("Reset Schedule table created/replaced and data moved successfully!")
 
 
