@@ -1,8 +1,8 @@
 streamlit==1.24.1
 streamlit_option_menu
-streamlit_option_menu
 pandas==1.3.0
 Pillow==8.2.0
 plotly==5.1.0
 numpy==1.21.0
 openpyxl==3.0.9
+snowflake-connector-python
