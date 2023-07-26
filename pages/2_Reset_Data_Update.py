@@ -1,6 +1,9 @@
 from ctypes.wintypes import SIZE
 import streamlit as st
 import snowflake.connector
+import snowflake
+from snowflake import connector
+import Distro_Grid_Snowflake_Uploader
 import datetime
 import pandas as pd
 from PIL import Image
@@ -546,24 +549,5 @@ with file_container:
             st.write("Writing to Snowflake - df_formatted:")
             #st.write(st.session_state.df_formatted)
             write_to_snowflake(st.session_state.df_formatted)
-
-
-#=============================================================================================
-# The following function will create or replce the existing RESET_SCHEDULE Table truncating all existing data
-# Once the table is creating it will move all the data in the RESET_TEMP table into the RESET_SCHEDULE
-# Table so the new resets can now be reported on and added to the Gap Report
-#=================================================================================================
-
-
-   
-#===============================================================================================
-# End Reset Schedule Table build out
-#===============================================================================================
-
-
-## Create a button in the Streamlit side panel
-#if st.sidebar.button(":blue[Go Live with Reset Schedule]"):
-#    create_replace_reset_schedule_table()
-#    st.success("Reset Schedule table created/replaced and data moved successfully!")
 
 

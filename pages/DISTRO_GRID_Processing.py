@@ -1,6 +1,4 @@
-﻿#from msilib.schema import File #can be removed
-#from turtle import width #can be removed
-import streamlit as st
+﻿import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
@@ -17,6 +15,7 @@ from Safeway_DG_format import format_SAFEWAY_DistroGrid
 from Wholefoods_DG_format import format_WHOLEFOODS_DistroGrid
 from Sprouts_DG_format import format_SPROUTS_DistroGrid
 from Smart_Final_DG_format import format_SMART_FINAL_DistroGrid
+from Distro_Grid_Snowflake_Uploader import upload_SAFEWAY_distro_grid_to_snowflake
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
 # from streamlit_extras.app_logo import add_logo #can be removed
@@ -135,7 +134,7 @@ with file_container:
 #===================================================================================================================
 
 
-    # Retrieve options from Snowflake table
+# Retrieve options from Snowflake table
 options = get_options()
 
 # Initialize session state variables
@@ -290,8 +289,59 @@ with snowflake_file_container:
     st.subheader(":blue[Write Distribution Grid to Snowflake Utility]")
 
 with snowflake_file_container:
-    # create file uploader
-    uploaded_files = st.file_uploader("Browse or select formatted Distrobution Grid excel sheets", type=["xlsx"], accept_multiple_files=True)
+
+    # Load Snowflake credentials from the secrets.toml file
+    snowflake_creds = st.secrets["snowflake"]
+
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )
+    # Retrieve options from Snowflake table
+    options = get_options()
+
+# Initialize session state variables
+if 'new_option' not in st.session_state:
+    st.session_state.new_option = ""
+if 'option_added' not in st.session_state:
+    st.session_state.option_added = False
+
+# Check if options are available
+if not options:
+    st.warning("No options available. Please add options to the list.")
+else:
+    # Create the dropdown in Streamlit
+    
+        selected_option = st.selectbox(':red[Select the Chain Distro Grid to upload to Snowflake]', options + ['Add new option...'], key="existing_chain_option")
+
+        # Check if the selected option is missing and allow the user to add it
+        if selected_option == 'Add new option...':
+            st.write("You selected: Add new option...")
+        
+            # Show the form to add a new option
+            with st.form(key='add_option_form', clear_on_submit=True):
+                new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
+                submit_button = st.form_submit_button('Add Option')
+            
+                if submit_button and new_option:
+                    options.append(new_option)
+                    update_options(options)
+                    st.success('Option added successfully!')
+                    st.session_state.option_added = True
+
+            # Clear the text input field
+            st.session_state.new_option = ""
+        
+        else:
+            # Display the selected option
+            st.write(f"You selected: {selected_option}")
+        # create file uploader
+        uploaded_files = st.file_uploader("Browse or select formatted Distribution Grid excel sheets", type=["xlsx"], accept_multiple_files=True)
 
 # Process each uploaded file
 for uploaded_file in uploaded_files:
@@ -328,10 +378,23 @@ def table_exists(conn, schema, table_name):
     cursor.close()
     return result[0] > 0
 
+
+
+import os
+
 # Process each uploaded file
 for uploaded_file in uploaded_files:
     # Read Excel file into pandas ExcelFile object
     excel_file = pd.ExcelFile(uploaded_file)
+
+    # Get the file name from the uploaded_file object
+    file_name = uploaded_file.name
+
+    # Extract the file name without the extension
+    file_name_without_extension = os.path.splitext(file_name)[0]
+
+    # Split the file name using underscores to get the chain name
+    chain_name = file_name_without_extension.split('_')[1]  # Assuming the format is 'formatted_CHAINNAME_spreadsheet.xlsx'
 
     # Get sheet names from ExcelFile object
     sheet_names = excel_file.sheet_names
@@ -343,15 +406,50 @@ for uploaded_file in uploaded_files:
         # Display DataFrame in Streamlit
         st.dataframe(df)
 
+        
+
    
 
     # Write DataFrame to Snowflake on button click
     button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
-    if st.button("Import into Snowflake", key=button_key):
+    if st.button("Import Distro Grid into Snowflake", key=button_key):
         with st.spinner('Uploading data to Snowflake ...'):
             # Create a table if it doesn't exist
             table_name = "DISTRO_GRID_TEST"  # Replace with your table name
             schema = "DATASETS"  # Replace with your schema name
+
+        # Write DataFrame to Snowflake based on the selected store
+            if chain_name  == selected_option:
+                upload_SAFEWAY_distro_grid_to_snowflake(df, schema,table_name,selected_option)
+            
+            #elif selected_option == "LUCKYS":
+            #    upload_reset_SCH_LUCKY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #elif selected_option == "WALMART":
+            #    upload_reset_SCH_WALMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #    # Add more if-else statements for other stores as needed
+            #elif selected_option == "RALEYS":
+            #    upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            ## Add more if-else statements for other stores as needed
+            #elif selected_option == "FOODMAXX":
+            #    upload_reset_SCH_FOODMAXX_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #elif selected_option == "SMART_FINAL":
+            #    upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #elif selected_option == "SPROUTS":
+            #    upload_reset_SCH_SPROUTS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #elif selected_option == "TARGET":
+            #    upload_reset_SCH_TARGET_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #elif selected_option == "WHOLEFOODS":
+            #    upload_reset_SCH_WHOLEFOODS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            #elif selected_option == "SAVEMART":
+            #     upload_reset_SCH_SAVEMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            # Add more if-else statements for other stores as needed
+            else:
+            # Call other formatting functions for different options
+            #st.write("test")#formatted_workbook = workbook  # Use the original workbook    
+            # Call other formatting functions for different options
+                   # Inform the user that the selected chain does not match the file name
+                st.warning(f"The selected chain '{selected_option}' does not match the chain in the file name '{chain_name}'.")
+                #formatted_workbook = workbook  # Use the original workbook
 
         # Replace 'NAN' values with NULL
         df = df.replace('NAN', np.nan).fillna(value='', method=None)
@@ -359,41 +457,7 @@ for uploaded_file in uploaded_files:
         # Replace empty strings with None
         df = df.replace('', None)
 
-        # Generate the SQL query
-        placeholders = ', '.join(['%s'] * len(df.columns))
-        insert_query = f"""
-        INSERT INTO {schema}.{table_name} (
-            STORE_NAME,
-            STORE_NUMBER,
-            UPC,
-            SKU,
-            PRODUCT_NAME,
-            MANUFACTURER,
-            SEGMENT,
-            YES_NO,
-            ACTIVATION_STATUS,
-            COUNTY,
-            CHAIN_NAME
-        )
-        VALUES ({placeholders})
-        """
-
         
-
-        # Chunk the DataFrame into smaller batches
-        chunk_size = 1000  # Adjust the chunk size as per your needs
-        chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
-
-        # Execute the query with parameterized values for each chunk
-        cursor = conn.cursor()
-        for chunk in chunks:
-            cursor.executemany(insert_query, chunk.values.tolist())
-        cursor.close()
-
-        # Close the connection to Snowflake
-        conn.close()
-
-    st.write("Data has been imported into Snowflake table for Sheet:", sheet_name, "in workbook:", uploaded_file.name)
 
 
 def create_replace_distro_grid_table():
@@ -441,27 +505,27 @@ def create_replace_distro_grid_table():
     # Close the connection
     conn.close()
 
-#====================================================================================================================
-# The code below adds a button to th sidebar that will take the distribution grid live wipping out all old data
-#====================================================================================================================
+##====================================================================================================================
+## The code below adds a button to th sidebar that will take the distribution grid live wipping out all old data
+##====================================================================================================================
 
 
-# Streamlit app code
-st.sidebar.subheader(":blue[Distro Grid Go-Live Utility]")
+## Streamlit app code
+#st.sidebar.subheader(":blue[Distro Grid Go-Live Utility]")
 
-# Create a form in the Streamlit sidebar
-with st.sidebar.form("go_live_form"):
-    st.subheader("Go Live with New Distribution Grid")
-    st.write(":red[By clicking 'Go Live with New Distribution Grid', you will delete your current distro_grid table and perform the data migration.]")
-    st.write(":red[This action cannot be undone.]")
-    submitted = st.form_submit_button("Go Live with Distribution Grid Go Live")
+## Create a form in the Streamlit sidebar
+#with st.sidebar.form("go_live_form"):
+#    st.subheader("Go Live with New Distribution Grid")
+#    st.write(":red[By clicking 'Go Live with New Distribution Grid', you will delete your current distro_grid table and perform the data migration.]")
+#    st.write(":red[This action cannot be undone.]")
+#    submitted = st.form_submit_button("Go Live with Distribution Grid Go Live")
     
-    # If the form is submitted, display a confirmation dialog
-    if submitted:
-        confirmation = st.warning("Are you sure you want to proceed? This action cannot be undone.",icon="⚠️")
-        if confirmation.button("Yes, I want to proceed"):
-            result = create_replace_distro_grid_table()
-            if result:
-                st.sidebar.success("New Distro_Grid table created/replaced and data moved successfully!")
-            else:
-                st.sidebar.error("An error occurred while creating/replacing the Distro_Grid table and moving data.")
+#    # If the form is submitted, display a confirmation dialog
+#    if submitted:
+#        confirmation = st.warning("Are you sure you want to proceed? This action cannot be undone.",icon="⚠️")
+#        if confirmation.button("Yes, I want to proceed"):
+#            result = create_replace_distro_grid_table()
+#            if result:
+#                st.sidebar.success("New Distro_Grid table created/replaced and data moved successfully!")
+#            else:
+#                st.sidebar.error("An error occurred while creating/replacing the Distro_Grid table and moving data.")

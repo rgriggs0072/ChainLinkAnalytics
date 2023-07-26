@@ -138,8 +138,7 @@ def upload_reset_SCH_SAFEWAY_data(df, warehouse, database, schema):
         cursor.close()
 
 
-        # Log the successful completion of the SQL activity
-        #insert_log_entry("SQL Activity", "Completed FOODMAXX upload", True, selected_option)
+        
 
         conn.close()
 
@@ -620,7 +619,7 @@ def upload_reset_SCH_SPROUTS_data(df, warehouse, database, schema):
         conn.close()
 
         st.success("Data has been successfully written to Snowflake.")
-    except Exception as e:
+   except Exception as e:
         st.exception(e)  # This will display the full traceback of the exception
         st.error(f"An error occurred while writing to Snowflake: {str(e)}")
 

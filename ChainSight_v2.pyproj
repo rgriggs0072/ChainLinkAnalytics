@@ -24,6 +24,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Distro_Grid_Snowflake_Uploader.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Home.py" />
     <Compile Include="Foodmaxx_DG_format.py">
       <SubType>Code</SubType>

@@ -16,12 +16,30 @@ def format_SAFEWAY_DistroGrid(workbook):
     # Select the Reset Dates sheet
     ws = workbook['SAFEWAY_dg']
 
-    # Insert a new column "Chain_Name" at the beginning and fill it with "WALMART"
+
+    # Get the maximum row number in column B (STORE_Number)
+    max_row_b = ws.max_row
+
+    # Find the last row with data in column B (STORE_Number)
+    last_row_with_data = max_row_b
+    for row in range(max_row_b, 1, -1):
+        if ws.cell(row=row, column=2).value is not None:
+            last_row_with_data = row
+            break
+
+    # Remove rows below the dataset
+    for row in range(last_row_with_data + 1, ws.max_row + 1):
+        ws.delete_rows(row)
+
+    # Update the maximum row number after deletion
+    max_row_b = ws.max_row
+
+    # Insert a new column "STORE_NAME" at the beginning and fill it with "SAFEWAY"
     ws.insert_cols(1)
     ws.cell(row=1, column=1, value="STORE_NAME")
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=1):
-        for cell in row:
-            cell.value = "SAFEWAY"
+    for row in range(2, ws.max_row + 1):
+        cell = ws.cell(row=row, column=1)
+    cell.value = "SAFEWAY"
 
     # Delete columns 3(C)
     ws.delete_cols(3)
@@ -61,11 +79,26 @@ def format_SAFEWAY_DistroGrid(workbook):
         if cell.value is not None:
             cell.value = str(cell.value).replace('ADDED', '1').replace('MAINTAIN', '1')
 
+     # Get the maximum row number in column b
+    max_row_b = ws.max_row
+
+    # Add "SAFEWAY" to each cell in column A
+    for row in range(2, max_row_b + 1):
+        cell = ws.cell(row=row, column=11)
+        cell.value = "SAFEWAY"
+
+    # Add "SAFEWAY" to each cell in column A
+    for row in range(2, max_row_b + 1):
+        cell = ws.cell(row=row, column=1)
+        cell.value = "SAFEWAY"
+
+    
+
 
 
     # Rename Columns as required to meet objective for uploading to Snowflake
-    ws.cell(row=1, column=1, value='STORE_Name')
-    ws.cell(row=1, column=2, value='STORE_Number')
+    ws.cell(row=1, column=1, value='STORE_NAME')
+    ws.cell(row=1, column=2, value='STORE_NUMBER')
     ws.cell(row=1, column=3, value='UPC')
     ws.cell(row=1, column=4, value='SKU')
     ws.cell(row=1, column=5, value='PRODUCT_NAME')
