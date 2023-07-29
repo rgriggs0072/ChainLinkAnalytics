@@ -112,6 +112,10 @@ def upload_SAFEWAY_distro_grid_to_snowflake(df, schema, table_name, selected_opt
         
         st.write(" they match", selected_option)
         
+        user_id = getpass.getuser()
+        local_ip = get_local_ip()
+
+        st.write("user selected", selected_option)
 
          ## Replace 'NAN' values with NULL
         df = df.replace('NAN', np.nan).fillna(value='', method=None)

@@ -2,6 +2,8 @@ import snowflake.connector
 import pandas as pd
 import streamlit as st
 from PIL import Image
+import openpyxl
+from io import BytesIO
 
 
 
@@ -90,7 +92,7 @@ def fetch_product_analysis_data():
     cursor = conn.cursor()
     cursor.execute(sql_query)
     results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=["Store", "Product", "UPC", "Salesperson", "ProductCount"])
+    df = pd.DataFrame(results, columns=["Store", "Product", "Salesperson", "UPC", "ProductCount"])
 
     # Close the cursor and connection
     cursor.close()
@@ -132,7 +134,67 @@ if st.button("Fetch Product Analysis Pivot Data"):
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-     
+  
+    
 
+
+
+
+
+#====================================================================================================================================
+
+# Function to pull Schematic Summary Data from snowflake
+
+#===================================================================================================================================
+
+def fetch_schematic_summary_data():
+    # Load Snowflake credentials from the secrets.toml file
+    snowflake_creds = st.secrets["snowflake"]
+
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )
+
+    # Execute the SQL query against the schematic_summary view and fetch the results into a DataFrame
+    sql_query = """
+    Select * from  schematic_summary
+    """
+    cursor = conn.cursor()
+    cursor.execute(sql_query)
+    results = cursor.fetchall()
+    df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Purchased", "Purchased_Percentage"])
+
+    # Close the cursor and connection
+    cursor.close()
+    conn.close()
+
+    return df
+
+#==================================================================================================================================
+# Button to call the Scehmatic Summary data function above and create the excel file and a button to download the file
+#====================================================================================================================================
+
+# Button to fetch and display the product analysis data
+if st.button("Fetch Schematic Summary Data"): 
+    with st.spinner('Getting Schematic Summary Data From Snowflake ...'):
+    # Fetch Schematic Summary Data
+     df = fetch_schematic_summary_data()
+
+# Download button for the Excel file
+    excel_file_path = "schematic_summary.xlsx"
+    df.to_excel(excel_file_path, index=False)
+
+    st.download_button(
+        label="Download Schematic Summary",
+        data=open(excel_file_path, "rb").read(),
+        file_name=excel_file_path,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
     

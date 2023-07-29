@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="E:\Randy_JR_Stuff\Python_code\chainsight\ChainSight_v2\ChainLinkAnalytics"
+VIRTUAL_ENV="E:\Randy_JR_Stuff\Python_code\chainsight\ChainSight_v2\chainlinkanalytics"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
@@ -55,9 +55,9 @@ fi
 
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
     _OLD_VIRTUAL_PS1="${PS1:-}"
-    PS1="(ChainLinkAnalytics) ${PS1:-}"
+    PS1="(chainlinkanalytics) ${PS1:-}"
     export PS1
-    VIRTUAL_ENV_PROMPT="(ChainLinkAnalytics) "
+    VIRTUAL_ENV_PROMPT="(chainlinkanalytics) "
     export VIRTUAL_ENV_PROMPT
 fi
 

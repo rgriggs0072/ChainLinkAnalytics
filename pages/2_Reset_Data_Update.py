@@ -2,7 +2,6 @@ from ctypes.wintypes import SIZE
 import streamlit as st
 import snowflake.connector
 import snowflake
-from snowflake import connector
 import Distro_Grid_Snowflake_Uploader
 import datetime
 import pandas as pd
