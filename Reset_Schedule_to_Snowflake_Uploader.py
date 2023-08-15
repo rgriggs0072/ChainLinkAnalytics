@@ -100,7 +100,7 @@ def upload_reset_SCH_SAFEWAY_data(df, warehouse, database, schema):
         # Remove data from the table where STORE_NAME is equal to selected_option
         remove_query = f"""
         DELETE FROM {schema}.RESET_SCHEDULE
-        WHERE CHAIN_NAME = '{selected_option}'
+        WHERE STORE_NAME = '{selected_option}'
         """
         description = f"Completed {selected_option} delete from reset table"
         insert_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
@@ -402,7 +402,18 @@ def upload_reset_SCH_RALEYS_data(df, warehouse, database, schema):
 def upload_reset_SCH_FOODMAXX_data(df, warehouse, database, schema):
 
     try: 
-        
+        # Load Snowflake credentials from the secrets.toml file
+        snowflake_creds = st.secrets["snowflake"]
+
+        # Establish a new connection to Snowflake
+        conn = snowflake.connector.connect(
+            account=snowflake_creds["account"],
+            user=snowflake_creds["user"],
+            password=snowflake_creds["password"],
+            warehouse=snowflake_creds["warehouse"],
+            database=snowflake_creds["database"],
+            schema=snowflake_creds["schema"]
+        )
         user_id = getpass.getuser()
         local_ip = get_local_ip()
 
@@ -419,7 +430,7 @@ def upload_reset_SCH_FOODMAXX_data(df, warehouse, database, schema):
         # Remove data from the table where STORE_NAME is equal to selected_option
         remove_query = f"""
         DELETE FROM {schema}.RESET_SCHEDULE
-        WHERE CHAIN_NAME = '{selected_option}'
+        WHERE STORE_NAME = '{selected_option}'
         """
         description = f"Completed {selected_option} delete from reset table"
         insert_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)

@@ -16,6 +16,7 @@ from Wholefoods_DG_format import format_WHOLEFOODS_DistroGrid
 from Sprouts_DG_format import format_SPROUTS_DistroGrid
 from Smart_Final_DG_format import format_SMART_FINAL_DistroGrid
 from Distro_Grid_Snowflake_Uploader import upload_SAFEWAY_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_FOODMAXX_distro_grid_to_snowflake
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
 # from streamlit_extras.app_logo import add_logo #can be removed
@@ -205,7 +206,7 @@ with file_container:
             if selected_option == 'TARGET':
                 formatted_workbook = format_TARGET_DistroGrid(workbook)
 
-            elif selected_option == 'FOODMAXX': #ADD THIS CONDITION FOR 'Food Maxx' OPTION
+            elif selected_option == 'FOOD MAXX': #ADD THIS CONDITION FOR 'Food Maxx' OPTION
                 formatted_workbook = format_FOODMAXX_DistroGrid(workbook)
 
             elif selected_option == 'LUCKYS': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
@@ -381,6 +382,7 @@ def table_exists(conn, schema, table_name):
 
 
 import os
+import re
 
 # Process each uploaded file
 for uploaded_file in uploaded_files:
@@ -393,20 +395,22 @@ for uploaded_file in uploaded_files:
     # Extract the file name without the extension
     file_name_without_extension = os.path.splitext(file_name)[0]
 
-    # Split the file name using underscores to get the chain name
-    chain_name = file_name_without_extension.split('_')[1]  # Assuming the format is 'formatted_CHAINNAME_spreadsheet.xlsx'
+    # Use regular expression to extract the chain name from the file name
+    chain_name_match = re.search(r"formatted_(\w+\s+\w+)_spreadsheet", file_name_without_extension)
+    if chain_name_match:
+        chain_name = chain_name_match.group(1)
+    else:
+        # If the chain name cannot be extracted, assume it's not formatted correctly
+        st.warning(f"The file name '{file_name}' is not formatted correctly.")
+        continue
 
     # Get sheet names from ExcelFile object
     sheet_names = excel_file.sheet_names
-    
-    # Display DataFrame for each sheet in Streamlit
-    for sheet_name in sheet_names:
-        df = pd.read_excel(excel_file, sheet_name=sheet_name)
+    print(file_name)
 
-        # Display DataFrame in Streamlit
-        st.dataframe(df)
-
-        
+    # Print the selected_option and chain_name
+    print(f"selected_option: {selected_option}")
+    print(f"chain_name: {chain_name}")        
 
    
 
@@ -415,12 +419,14 @@ for uploaded_file in uploaded_files:
     if st.button("Import Distro Grid into Snowflake", key=button_key):
         with st.spinner('Uploading data to Snowflake ...'):
             # Create a table if it doesn't exist
-            table_name = "DISTRO_GRID_TEST"  # Replace with your table name
+            table_name = "DISTRO_GRID"  # Replace with your table name
             schema = "DATASETS"  # Replace with your schema name
 
-        # Write DataFrame to Snowflake based on the selected store
-            if chain_name  == selected_option:
+            # Write DataFrame to Snowflake based on the selected store
+            if selected_option == 'SAFEWAY':
                 upload_SAFEWAY_distro_grid_to_snowflake(df, schema,table_name,selected_option)
+            elif selected_option == 'FOOD MAXX':
+                upload_FOODMAXX_distro_grid_to_snowflake(df, schema, table_name, selected_option)
             
             #elif selected_option == "LUCKYS":
             #    upload_reset_SCH_LUCKY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
@@ -430,8 +436,7 @@ for uploaded_file in uploaded_files:
             #elif selected_option == "RALEYS":
             #    upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
             ## Add more if-else statements for other stores as needed
-            #elif selected_option == "FOODMAXX":
-            #    upload_reset_SCH_FOODMAXX_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            
             #elif selected_option == "SMART_FINAL":
             #    upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")
             #elif selected_option == "SPROUTS":
@@ -444,12 +449,11 @@ for uploaded_file in uploaded_files:
             #     upload_reset_SCH_SAVEMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
             # Add more if-else statements for other stores as needed
             else:
-            # Call other formatting functions for different options
-            #st.write("test")#formatted_workbook = workbook  # Use the original workbook    
-            # Call other formatting functions for different options
-                   # Inform the user that the selected chain does not match the file name
-                st.warning(f"The selected chain '{selected_option}' does not match the chain in the file name '{chain_name}'.")
-                #formatted_workbook = workbook  # Use the original workbook
+            
+             # Inform the user that the selected chain does not match the file name
+               st.warning(f"The selected chain '{selected_option}' does not match the chain in the file name '{chain_name}'.")
+                
+               #formatted_workbook = workbook  # Use the original workbook
 
         # Replace 'NAN' values with NULL
         df = df.replace('NAN', np.nan).fillna(value='', method=None)

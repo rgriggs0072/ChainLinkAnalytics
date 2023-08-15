@@ -213,7 +213,7 @@ with file_container:
             elif selected_option == 'WALMART': #ADD THIS CONDITION FOR 'WALMART' OPTION
                 formatted_workbook = format_WALMART_schedule(workbook)
             # Call the format_FOODMAXX_Schedule function for 'FoodMaxx' option
-            elif selected_option == 'FOODMAXX': #ADD THIS CONDITION FOR 'WALMART' OPTION
+            elif selected_option == 'FOOD MAXX': #ADD THIS CONDITION FOR 'WALMART' OPTION
                 formatted_workbook = format_FOODMAXX_schedule(workbook)
             # Call the format_LUCKYS_Schedule function for 'Luckys' option
             elif selected_option == 'LUCKYS': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
@@ -232,10 +232,16 @@ with file_container:
                 # Call other formatting functions for different options
                 formatted_workbook = workbook  # Use the original workbook
 
-        # Create a new filename based on the selected option
-        new_filename = f"formatted_{selected_option}_RESET_spreadsheet.xlsx"
+            # Create a new filename based on the selected option
+            new_filename = f"formatted_{selected_option}_RESET_spreadsheet.xlsx"
 
-   
+            #Remove the autofilter if it exists
+            if formatted_workbook is not None:
+                for sheet_name in formatted_workbook.sheetnames:
+                    sheet = formatted_workbook[sheet_name]
+                    if sheet.auto_filter:
+                        sheet.auto_filter.ref = None
+                        st.write(f"Autofilter removed from '{sheet_name}' worksheet.")
 
     # Check if the workbook was successfully formatted
     if formatted_workbook is not None:
@@ -424,7 +430,7 @@ with file_container:
                 elif selected_option == "RALEYS":
                     upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                     # Add more if-else statements for other stores as needed
-                elif selected_option == "FOODMAXX":
+                elif selected_option == "FOOD MAXX":
                     upload_reset_SCH_FOODMAXX_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                 elif selected_option == "SMART_FINAL":
                     upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")

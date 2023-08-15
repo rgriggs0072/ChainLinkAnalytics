@@ -40,7 +40,7 @@ def text_to_time(text):
 
 def format_RALEYS_Schedule(workbook):
     import datetime
-    st.write("YAY YOU CALLED ME Raleys")
+    st.write("Formatting workbook for Raleys")
     # Delete all sheets except Reset Dates
     for sheet_name in workbook.sheetnames:
         if sheet_name != 'Reset Dates':

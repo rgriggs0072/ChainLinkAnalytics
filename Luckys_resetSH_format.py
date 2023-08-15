@@ -40,7 +40,7 @@ def adjust_column_widths(worksheet):
 #====================================================================================================================
 def format_LUCKYS_Schedule(workbook):
 
-    st.write("YAY YOU CALLED ME LUCKY")
+    st.write("Formatting workbook for LUCKY")
 
     # Select the Reset Dates sheet
     ws = workbook['LUCKY']

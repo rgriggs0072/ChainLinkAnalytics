@@ -83,8 +83,8 @@ def fetch_product_analysis_data():
     SELECT
         STORE_NAME,
         PRODUCT_NAME,
-        UPC,
         SALESPERSON,
+        UPC,
         _COUNT AS ProductCount
     FROM
         DATASETS.DATASETS.PRODUCT_ANALYSIS;
@@ -93,6 +93,9 @@ def fetch_product_analysis_data():
     cursor.execute(sql_query)
     results = cursor.fetchall()
     df = pd.DataFrame(results, columns=["Store", "Product", "Salesperson", "UPC", "ProductCount"])
+    df['Salesperson'].fillna('Unknown', inplace=True)
+
+    st.write(df)
 
     # Close the cursor and connection
     cursor.close()
@@ -115,7 +118,7 @@ if st.button("Fetch Product Analysis Pivot Data"):
 #Create the excel pivot table and provide download button    
      # Pivot table creation
      # Pivot table creation
-     pivot_table = pd.pivot_table(df, values="ProductCount", index=["UPC", "Product", "Salesperson"], columns="Store", fill_value=0)
+     pivot_table = pd.pivot_table(df, values="ProductCount", index=["UPC", "Product","Salesperson" ], columns="Store", fill_value=0)
 
      # Add total by salesperson
     pivot_table["Total"] = pivot_table.sum(axis=1)

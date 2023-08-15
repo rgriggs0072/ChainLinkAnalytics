@@ -54,7 +54,7 @@ def format_row_heights(worksheet, start_row, end_row, height):
 #====================================================================================================================
 def format_SMARTFINAL_Schedule(workbook):
 
-    st.write("YAY YOU CALLED ME SMART-N-FINAL")
+    st.write("Formatting workbook for SMART-N-FINAL")
 
     # Select the Reset Dates sheet
     ws = workbook['Reset Calendar']

@@ -5,7 +5,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 def format_FOODMAXX_DistroGrid(workbook):
     # Assuming the sheet name is 'Sheet1', you can modify it as per your actual sheet name
-    sheet = workbook['FoodmaxxDG']
+    sheet = workbook['Sheet2']
 
     # Read the data from the sheet into a DataFrame
     data = sheet.values
@@ -41,13 +41,13 @@ def format_FOODMAXX_DistroGrid(workbook):
     # Reorder the columns with "STORE_NAME" in position 0, "STORE_NUMBER" in position 1, and "UPC" in position 2
     df_melted = df_melted[["STORE_NAME", "STORE_NUMBER", "UPC"] + [col for col in df_melted.columns if col not in ["STORE_NAME", "STORE_NUMBER", "UPC"]]]
 
-    # Delete columns F and G
-    df_melted = df_melted.drop(columns=["PTS of Distro", "% of Distro"])
+    # Delete columns D and E
+    df_melted = df_melted.drop(columns=["Distro", "Distro %"])
 
 
     
-        # Define the list of desired columns
-    desired_columns = ["STORE_NAME", "STORE_NUMBER", "UPC", "SKU #", "Name", "Manufacturer", "SEGMENT", "Yes/No", "ACTIVATION_STATUS", "COUNTY", "CHAIN_NAME"]
+    # Define the list of desired columns
+    desired_columns = ["STORE_NAME", "STORE_NUMBER", "UPC", "SKU", "PRODUCT_NAME", "MANUFACTURER", "SEGMENT", "Yes/No", "ACTIVATION_STATUS", "COUNTY", "CHAIN_NAME"]
 
     # Reindex the DataFrame with the desired columns
     df_melted = df_melted.reindex(columns=desired_columns)
@@ -64,10 +64,16 @@ def format_FOODMAXX_DistroGrid(workbook):
 
 
     # Remove ' and , characters from all columns
-    df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1'}, regex=True)
+    df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1', 'No': '0'}, regex=True)
+
+    # Fill STORE_NAME column with "FOOD MAXX" starting from row 2
+    df_melted.loc[0:, "STORE_NAME"] = "FOOD MAXX"
+
+    # Fill SKU column with 0 starting from row 2
+    df_melted.loc[0:, "SKU"] = 0
 
     # Fill CHAIN_NAME column with "FOOD MAXX" starting from row 2
-    df_melted.loc[0:, "CHAIN_NAME"] = "FOODMAXX"
+    df_melted.loc[0:, "CHAIN_NAME"] = "SAVEMART"
 
 
 
