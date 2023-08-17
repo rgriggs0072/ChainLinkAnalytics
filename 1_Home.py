@@ -1,3 +1,4 @@
+from cgitb import text
 import streamlit as st
 from streamlit_option_menu import option_menu
 import snowflake.connector
@@ -90,7 +91,7 @@ def fetch_schematic_summary_data():
 schematic_summary_data = fetch_schematic_summary_data()
 
 # Add centered and styled title above the scatter chart
-st.markdown("<h1 style='text-align: center; font-size: 24px;'>By Product, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Product, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
 
 # Create a scatter chart using Altair
 scatter_chart = alt.Chart(schematic_summary_data).mark_circle().encode(
@@ -105,10 +106,9 @@ st.altair_chart(scatter_chart, use_container_width=True)
 
 # Fetch data from the new view that includes chain name, product name, and purchased percentage
 def fetch_chain_schematic_data():
-  
+
     # Load Snowflake credentials from the secrets.toml file
     snowflake_creds = st.secrets["snowflake"]
-    
     # Establish a new connection to Snowflake
     conn = snowflake.connector.connect(
         account=snowflake_creds["account"],
@@ -117,11 +117,11 @@ def fetch_chain_schematic_data():
         warehouse=snowflake_creds["warehouse"],
         database=snowflake_creds["database"],
         schema=snowflake_creds["schema"]
-    )
+    )    
+
     sql_query = """
     SELECT 
         CHAIN_NAME,
-        PRODUCT_NAME,
         "Total_In_Schematic",
         "Purchased",
         "Purchased_Percentage"
@@ -131,31 +131,66 @@ def fetch_chain_schematic_data():
     cursor = conn.cursor()
     cursor.execute(sql_query)
     results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=["CHAIN_NAME", "Product Name", "Total_In_Schematic", "Purchased", "Purchased Percentage"])
+    df = pd.DataFrame(results, columns=["CHAIN_NAME", "Total_In_Schematic", "Purchased", "Purchased_Percentage"])
 
     cursor.close()
     conn.close()
 
     # Format the Purchased Percentage column as percentage with two decimal places
-    df["Purchased Percentage"] = df["Purchased Percentage"].apply(lambda x: f"{float(x):.2f}%")
+    df["Purchased_Percentage"] = df["Purchased_Percentage"].apply(lambda x: f"{float(x):.2f}%")
+
 
     return df
 
 # Fetch chain schematic data
 chain_schematic_data = fetch_chain_schematic_data()
 
-# Add centered and styled title above the scatter chart
-st.markdown("<h1 style='text-align: center; font-size: 24px;'>By Chain, Product in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+# Add centered and styled title above the bar chart
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+
+# Create a bar chart using Altair with percentage labels on bars
+bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
+    x='CHAIN_NAME',
+    y='Total_In_Schematic',
+    color=alt.Color('Purchased_Percentage', scale=alt.Scale(scheme='viridis')),
+    tooltip=['CHAIN_NAME', 'Total_In_Schematic', 'Purchased', 'Purchased_Percentage']
+).properties(
+    width=800,  # Adjust the width as needed
+    height=400,  # Adjust the height as needed
+).configure_title(
+    align='center',
+    fontSize=16  # Adjust the font size as needed
+).encode(
+    text=alt.Text('Purchased_Percentage:Q', format='.2f')  # Format the percentage label
+).configure_mark(
+    fontSize=14  # Adjust the font size of the percentage label
+)
+
+# Display the bar chart using Streamlit
+st.altair_chart(bar_chart, use_container_width=False) 
 
 
-# Create a scatter chart using Altair
-scatter_chart = alt.Chart(chain_schematic_data).mark_circle().encode(
-    x='Total_In_Schematic',
-    y='Purchased',
-    color='CHAIN_NAME',
-    tooltip=['CHAIN_NAME', 'Product Name', 'Total_In_Schematic', 'Purchased', 'Purchased Percentage']
-).interactive()
 
-# Display the scatter chart using Streamlit
-st.altair_chart(scatter_chart, use_container_width=True)
 
+
+## Fetch chain schematic data
+#chain_schematic_data = fetch_chain_schematic_data()
+
+## Add centered and styled title above the scatter chart
+#st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+
+## Create a scatter chart using Altair
+#scatter_chart = alt.Chart(chain_schematic_data).mark_circle().encode(
+#    x='Total_In_Schematic',
+#    y='Purchased',
+#    color='CHAIN_NAME',
+#    tooltip=['CHAIN_NAME', 'Total_In_Schematic', 'Purchased', 'Purchased_Percentage']
+#).properties(
+#    #title="By Chain, Product in Schematic Compared to Sold in and Percentage"
+#).configure_title(
+#    align='center',
+#    fontSize=16  # Adjust the font size as needed
+#).interactive()
+
+## Display the scatter chart using Streamlit
+#st.altair_chart(scatter_chart, use_container_width=True)
