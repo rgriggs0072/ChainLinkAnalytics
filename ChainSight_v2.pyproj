@@ -84,6 +84,7 @@
   <ItemGroup>
     <Content Include="pages\5_Load_Customer_Data.py" />
     <Content Include="css\style.css" />
+    <Content Include="style.css" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="chainlinkanalytics\">

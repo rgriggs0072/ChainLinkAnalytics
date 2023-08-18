@@ -15,6 +15,10 @@ st.set_page_config(layout="wide")
 padding_top = 0
 # st.snow()
 
+with open('style.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+
 # This function sets the logo and company name inside the sidebar
 def add_logo(logo_path, width, height):
     """Read and return a resized logo"""
@@ -33,7 +37,7 @@ st.markdown(
     """
         <style>
             hr {
-                margin-top: 0.5rem;
+                margin-top: 0.0rem;
                 margin-bottom: 0.5rem;
                 height: 3px;
                 background-color: #333;
@@ -142,11 +146,23 @@ def fetch_chain_schematic_data():
 
     return df
 
+
+#===============================================================================================================================================
+# Provides Execution by Chain barchart
+#===============================================================================================================================================
 # Fetch chain schematic data
 chain_schematic_data = fetch_chain_schematic_data()
 
-# Add centered and styled title above the bar chart
-st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+# Add centered and styled title above the scatter chart
+st.markdown("<h1 style='text-align: left; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+
+# Clean and convert the Purchased_Percentage column to numeric
+chain_schematic_data['Purchased_Percentage'] = chain_schematic_data['Purchased_Percentage'].str.replace('%', '').astype(float)
+
+# Calculate summary statistics
+total_in_schematic = chain_schematic_data['Total_In_Schematic'].sum()
+total_purchased = chain_schematic_data['Purchased'].sum()
+average_percentage = chain_schematic_data['Purchased_Percentage'].mean()
 
 # Create a bar chart using Altair with percentage labels on bars
 bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
@@ -166,8 +182,36 @@ bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
     fontSize=14  # Adjust the font size of the percentage label
 )
 
-# Display the bar chart using Streamlit
-st.altair_chart(bar_chart, use_container_width=False) 
+
+#=======================================================================================================================================
+# Create two columns to display barchart in column 1 and execution summary in column two
+#=======================================================================================================================================
+
+# Create a layout with two columns
+col1, col2 = st.columns([2, 1])
+#======================================================================================================================================
+# call above code to get the data and display barchart
+#=========================================================================================================================================
+
+# Display the bar chart in the first column
+col1.altair_chart(bar_chart, use_container_width=False)
+
+#===============================================================================================================================
+# Calculate the pruchased percentage and display in the summary data
+#==============================================================================================================================================
+
+# Calculate the overall purchased percentage
+overall_percentage = (total_purchased / total_in_schematic) * 100
+
+# Display the summary data in the second column
+col2.markdown("<div style='text-align: center; margin-top: 10px;'>", unsafe_allow_html=True)
+#col2.markdown(f"<div style='{summary_style}'>", unsafe_allow_html=True)
+col2.write("Execution Summary:")
+col2.write(f"Total In Schematic: {total_in_schematic}")
+col2.write(f"Total Purchased: {total_purchased}")
+col2.write(f"Overall Purchased Percentage: {overall_percentage:.2f}%")
+col2.markdown("</div>", unsafe_allow_html=True)
+col2.markdown("</div>", unsafe_allow_html=True)
 
 
 
