@@ -1,5 +1,5 @@
 import ipaddress
-from tkinter import SEL
+#from tkinter import SEL
 #from msilib import schema
 import streamlit as st
 import snowflake.connector
