@@ -31,7 +31,7 @@ st.sidebar.image(my_logo)
 st.sidebar.subheader("Delta Pacific Beverage Co.")
 
 # Set Page Header
-st.header("Manage Chain Resets and Gap Analysis")
+st.header("Delta Pacific Beverage Chain Dashboard")
 # Set custom CSS for hr element
 st.markdown(
     """
@@ -51,62 +51,7 @@ st.markdown(
 # Add horizontal line
 st.markdown("<hr>", unsafe_allow_html=True)
 
-# Fetch data from the SCHMATIC_SUMMARY view
-def fetch_schematic_summary_data():
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
-    
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
 
-    sql_query = """
-    SELECT 
-        UPC,
-        PRODUCT_NAME,
-        "Total_In_Schematic",
-        "Purchased",
-        "Purchased_Percentage"
-    FROM 
-        DATASETS.DATASETS.SCHEMATIC_SUMMARY;
-    """
-    cursor = conn.cursor()
-    cursor.execute(sql_query)
-    results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=["UPC", "Product Name", "Total In Schematic", "Purchased", "Purchased Percentage"])
-
-    # Close the cursor and connection
-    cursor.close()
-    conn.close()
-
-    # Format the Purchased Percentage column as percentage with two decimal places
-    df["Purchased Percentage"] = df["Purchased Percentage"].apply(lambda x: f"{float(x):.2f}%")
-
-
-    return df
-
-# Fetch schematic summary data
-schematic_summary_data = fetch_schematic_summary_data()
-
-# Add centered and styled title above the scatter chart
-st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Product, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
-
-# Create a scatter chart using Altair
-scatter_chart = alt.Chart(schematic_summary_data).mark_circle().encode(
-    x='Total In Schematic',
-    y='Purchased',
-    color='Product Name',
-    tooltip=['Product Name', 'UPC', 'Total In Schematic', 'Purchased', 'Purchased Percentage']
-).interactive()
-
-# Display the scatter chart using Streamlit
-st.altair_chart(scatter_chart, use_container_width=True)
 
 # Fetch data from the new view that includes chain name, product name, and purchased percentage
 def fetch_chain_schematic_data():
@@ -153,8 +98,6 @@ def fetch_chain_schematic_data():
 # Fetch chain schematic data
 chain_schematic_data = fetch_chain_schematic_data()
 
-# Add centered and styled title above the scatter chart
-st.markdown("<h1 style='text-align: left; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
 
 # Clean and convert the Purchased_Percentage column to numeric
 chain_schematic_data['Purchased_Percentage'] = chain_schematic_data['Purchased_Percentage'].str.replace('%', '').astype(float)
@@ -188,13 +131,15 @@ bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
 #=======================================================================================================================================
 
 # Create a layout with two columns
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([1, 2])
 #======================================================================================================================================
 # call above code to get the data and display barchart
 #=========================================================================================================================================
+# Add centered and styled title above the scatter chart
+# Add centered and styled title above the scatter chart in the second column
+col2.markdown("<h1 style='text-align: center; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
 
-# Display the bar chart in the first column
-col1.altair_chart(bar_chart, use_container_width=False)
+# Display the scatter chart in the second column
 
 #===============================================================================================================================
 # Calculate the pruchased percentage and display in the summary data
@@ -203,17 +148,219 @@ col1.altair_chart(bar_chart, use_container_width=False)
 # Calculate the overall purchased percentage
 overall_percentage = (total_purchased / total_in_schematic) * 100
 
-# Display the summary data in the second column
-col2.markdown("<div style='text-align: center; margin-top: 10px;'>", unsafe_allow_html=True)
+# Display the summary data in the first column
+col1.markdown("<div style='text-align: center; margin-top: 10px;'>", unsafe_allow_html=True)
 #col2.markdown(f"<div style='{summary_style}'>", unsafe_allow_html=True)
-col2.write("Execution Summary:")
-col2.write(f"Total In Schematic: {total_in_schematic}")
-col2.write(f"Total Purchased: {total_purchased}")
-col2.write(f"Overall Purchased Percentage: {overall_percentage:.2f}%")
-col2.markdown("</div>", unsafe_allow_html=True)
-col2.markdown("</div>", unsafe_allow_html=True)
+col1.write("Execution Summary:")
+col1.write(f"Total In Schematic: {total_in_schematic}")
+col1.write(f"Total Purchased: {total_purchased}")
+col1.write(f"Overall Purchased Percentage: {overall_percentage:.2f}%")
+col1.markdown("</div>", unsafe_allow_html=True)
+col1.markdown("</div>", unsafe_allow_html=True)
+
+# Display the bar chart in the first column
+col2.altair_chart(bar_chart, use_container_width=False)
+
+#============================================================================================================================================
+# End Barchart and summary by chain
+#=============================================================================================================================================
+
+#------------------------------------------------------------------------------------------------------------------------------------------
+
+#============================================================================================================================================
+# Build scatter chart and summary by supplier
+#=============================================================================================================================================
 
 
+
+# Load Snowflake credentials from the secrets.toml file
+snowflake_creds = st.secrets["snowflake"]
+    # Establish a new connection to Snowflake
+conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )    
+
+# Fetch supplier names from the supplier_county table
+def fetch_supplier_names():
+    query = "SELECT DISTINCT supplier FROM supplier_county order by supplier"
+    cursor = conn.cursor()
+    cursor.execute(query)
+    results = cursor.fetchall()
+    supplier_names = [row[0] for row in results]
+    cursor.close()
+    return supplier_names
+
+# Create a sidebar select widget for selecting suppliers
+#selected_suppliers = st.sidebar.multiselect("Select Suppliers", fetch_supplier_names())
+
+# Close the Snowflake connection
+#conn.close()
+
+
+
+# Fetch schematic summary data for selected suppliers
+def fetch_supplier_schematic_summary_data(selected_suppliers):
+    # Load Snowflake credentials from the secrets.toml file
+    snowflake_creds = st.secrets["snowflake"]
+    
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )
+
+    supplier_conditions = ", ".join([f"'{supplier}'" for supplier in selected_suppliers])
+    
+    sql_query = f"""
+    SELECT 
+        SUPPLIER_Name,
+        "Total_In_Schematic",
+        "Purchased",
+        "Purchased_Percentage"
+        
+    FROM 
+        DATASETS.DATASETS.supplier_schematic_summary
+    WHERE
+        SUPPLIER_name IN ({supplier_conditions});
+    """
+    cursor = conn.cursor()
+    cursor.execute(sql_query)
+    results = cursor.fetchall()
+    df = pd.DataFrame(results, columns=["Supplier_Name","Total In Schematic", "Purchased", "Purchased Percentage"])
+
+    # Close the cursor and connection
+    cursor.close()
+    conn.close()
+   
+    # Format the Purchased Percentage column as percentage with two decimal places
+    df["Purchased Percentage"] = df["Purchased Percentage"].apply(lambda x: f"{float(x):.2f}%")
+
+    return df
+
+#.........
+
+
+#......................
+# Fetch schematic summary data for selected suppliers
+def fetch_scatter_supplier_schematic_summary_data(selected_suppliers):
+    # Load Snowflake credentials from the secrets.toml file
+    snowflake_creds = st.secrets["snowflake"]
+    
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )
+
+    supplier_conditions = ", ".join([f"'{supplier}'" for supplier in selected_suppliers])
+    
+    sql_query = f"""
+    SELECT 
+        UPC,
+         PRODUCT_NAME,
+        "Total_In_Schematic",
+        "Purchased",
+        "Purchased_Percentage"
+        
+    FROM 
+        DATASETS.DATASETS.schematic_summary
+    WHERE
+        SUPPLIER IN ({supplier_conditions});
+    """
+    cursor = conn.cursor()
+    cursor.execute(sql_query)
+    results = cursor.fetchall()
+    df = pd.DataFrame(results, columns=["UPC","PRODUCT_NAME", "Total In Schematic", "Purchased", "Purchased Percentage"])
+
+    # Close the cursor and connection
+    cursor.close()
+    conn.close()
+   
+    # Format the Purchased Percentage column as percentage with two decimal places
+    df["Purchased Percentage"] = df["Purchased Percentage"].apply(lambda x: f"{float(x):.2f}%")
+
+    return df
+
+#...................................................
+
+# Add centered and styled title above the bar chart
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Supplier, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+
+# Create a sidebar select widget for selecting suppliers
+selected_suppliers = st.sidebar.multiselect("Select Suppliers", fetch_supplier_names())
+
+# Fetch supplier schematic summary data for selected suppliers if there are any
+supplier_schematic_summary_data = None
+if selected_suppliers:
+    supplier_schematic_summary_data = fetch_supplier_schematic_summary_data(selected_suppliers)
+
+# Display the bar chart if there is data
+if supplier_schematic_summary_data is not None:
+    # Create a bar chart using Altair
+    supplier_bar_chart = alt.Chart(supplier_schematic_summary_data).mark_bar().encode(
+        x='Supplier_Name',
+        y='Total In Schematic',
+        color=alt.Color('Purchased Percentage', scale=alt.Scale(scheme='viridis')),
+        tooltip=['Supplier_Name', 'Total In Schematic', 'Purchased', 'Purchased Percentage']
+    ).interactive()
+
+    # Display the supplier bar chart
+    st.altair_chart(supplier_bar_chart, use_container_width=True)
+else:
+    # If supplier_schematic_summary_data is None, display a message
+    st.write("Please select one or more suppliers to view the chart")
+
+# Add centered and styled title above the scatter chart
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Product, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+
+# Fetch schematic summary data for selected suppliers if there are any
+scatter_schematic_summary_data = None
+if selected_suppliers:
+    scatter_schematic_summary_data = fetch_scatter_supplier_schematic_summary_data(selected_suppliers)
+
+# Check if scatter_schematic_summary_data is not None before creating the scatter chart
+if scatter_schematic_summary_data is not None:
+    # Create a scatter chart using Altair
+    scatter_chart = alt.Chart(scatter_schematic_summary_data).mark_circle().encode(
+        x='Total In Schematic',
+        y='Purchased',
+        color='PRODUCT_NAME',
+        tooltip=['PRODUCT_NAME', 'UPC', 'Total In Schematic', 'Purchased', 'Purchased Percentage']
+    ).interactive()
+
+    # Display the scatter chart
+    st.altair_chart(scatter_chart, use_container_width=True)
+else:
+    # If scatter_schematic_summary_data is None, create an empty DataFrame with appropriate columns
+    empty_data = pd.DataFrame(columns=["Product Name", "UPC", "Total In Schematic", "Purchased", "Purchased Percentage"])
+  
+    # Create a scatter chart with the empty DataFrame
+    scatter_chart = alt.Chart(empty_data).mark_circle().encode(
+        x='Total In Schematic',
+        y='Purchased'
+    ).properties(
+        title="Please select one or more suppliers to view the chart"
+    )
+    
+    # Display the scatter chart
+    st.altair_chart(scatter_chart, use_container_width=True)
+
+
+
+ #...
 
 
 

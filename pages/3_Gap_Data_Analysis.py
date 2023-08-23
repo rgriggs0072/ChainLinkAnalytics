@@ -11,6 +11,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
 import numpy as np
 from io import BytesIO
+import os
 from openpyxl import Workbook
 import datetime
 import base64
@@ -301,8 +302,15 @@ def create_gap_report(conn, salesperson, store, supplier):
             query = "SELECT * FROM Gap_Report"
     df = pd.read_sql(query, conn)
 
+    # Get the user's download folder
+    download_folder = os.path.expanduser("~\Downloads")
+
     # Write the updated dataframe to a temporary file
-    temp_file_path = 'temp.xlsx'
+    temp_file_name = 'temp.xlsx'
+
+    # Create the full path to the temporary file
+    temp_file_path = os.path.join(download_folder, temp_file_name)
+
     #df.to_excel(temp_file_path, index=False)
 
     df.to_excel(temp_file_path, index=False)  # Save the DataFrame to a temporary file
@@ -355,8 +363,10 @@ with st.sidebar:
             today = datetime.datetime.today().strftime('%Y-%m-%d') # get current date in YYYY-MM-DD format
             file_name = f"Gap_Report_{today}.xlsx" # insert current date into file name
 
-            st.download_button(label="Download Gap Report", data=bytes_data, file_name=file_name, mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            st.write("File will be downloaded to your local download folder")
+            downloadcontainer = st.container()
+            with downloadcontainer:
+                st.download_button(label="Download Gap Report", data=bytes_data, file_name=file_name, mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                st.write("File will be downloaded to your local download folder")
 
             container = st.container()
             with container:
