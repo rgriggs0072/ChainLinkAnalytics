@@ -137,7 +137,7 @@ col1, col2 = st.columns([1, 2])
 #=========================================================================================================================================
 # Add centered and styled title above the scatter chart
 # Add centered and styled title above the scatter chart in the second column
-col2.markdown("<h1 style='text-align: center; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+col2.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Chain</h1>", unsafe_allow_html=True)
 
 # Display the scatter chart in the second column
 
@@ -297,7 +297,7 @@ def fetch_scatter_supplier_schematic_summary_data(selected_suppliers):
 #...................................................
 
 # Add centered and styled title above the bar chart
-st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Supplier, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Supplier</h1>", unsafe_allow_html=True)
 
 # Create a sidebar select widget for selecting suppliers
 selected_suppliers = st.sidebar.multiselect("Select Suppliers", fetch_supplier_names())
@@ -324,7 +324,7 @@ else:
     st.write("Please select one or more suppliers to view the chart")
 
 # Add centered and styled title above the scatter chart
-st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Product, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Product by Supplier</h1>", unsafe_allow_html=True)
 
 # Fetch schematic summary data for selected suppliers if there are any
 scatter_schematic_summary_data = None
