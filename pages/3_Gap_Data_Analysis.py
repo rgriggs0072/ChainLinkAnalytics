@@ -303,7 +303,7 @@ def create_gap_report(conn, salesperson, store, supplier):
     df = pd.read_sql(query, conn)
 
     # Get the user's download folder
-    download_folder = os.path.expanduser("~\\Downloads")
+    download_folder = os.path.expanduser(r"~\Downloads")
 
     # Write the updated dataframe to a temporary file
     temp_file_name = 'temp.xlsx'
