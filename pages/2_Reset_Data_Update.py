@@ -577,23 +577,24 @@ with file_container:
 
 uploaded_file_snowflake = st.file_uploader(":red[Upload formated file to write to snowflake]", type=["xlsx", "xls"])
 
-# Show the Write to Snowflake button
-if st.button("Write Supplier by County Data to Snowflake"):
-    if st.session_state.df_formatted is None:
-        st.warning("Please click the 'Reformat Supplier by County Spreadsheet' button to format the data.")
-    elif uploaded_file_snowflake is None:
-        st.warning("Please upload the formatted file to proceed.")
-    else:
-        # Load the formatted DataFrame from the session state
-        df_formatted = st.session_state.df_formatted
-        
-        # Write the DataFrame data to Snowflake table
-        st.write("Writing to Snowflake - df_formatted:")
-        #st.write(df_formatted)  # Display the formatted data (optional)
-        
-        # Write the data to Snowflake
-        write_to_snowflake(df_formatted)
-        st.success("Data written to Snowflake successfully!")
+if uploaded_file_snowflake is not None:
+    # Show the Write to Snowflake button
+    if st.button("Write Supplier by County Data to Snowflake"):
+        if st.session_state.df_formatted is None:
+            st.warning("Please click the 'Reformat Supplier by County Spreadsheet' button to format the data.")
+        else:
+            # Load the formatted DataFrame from the session state
+            df_formatted = st.session_state.df_formatted
+            
+            # Write the DataFrame data to Snowflake table
+            st.write("Writing to Snowflake - df_formatted:")
+            #st.write(df_formatted)  # Display the formatted data (optional)
+            
+            # Write the data to Snowflake
+            write_to_snowflake(df_formatted)
+            st.success("Data written to Snowflake successfully!")
+else:
+    st.warning("Please upload the formatted file to enable the 'Write Supplier by County Data to Snowflake' button.")
 
 
 
