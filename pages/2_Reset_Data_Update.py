@@ -272,8 +272,7 @@ with file_container:
 
 
 
-# Add horizontal line
-st.markdown("<hr>", unsafe_allow_html=True)
+
 
 
 def update_metadata_table(table_name):
@@ -594,7 +593,8 @@ if uploaded_file_snowflake is not None:
             write_to_snowflake(df_formatted)
             st.success("Data written to Snowflake successfully!")
 else:
-    st.warning("Please upload the formatted file to enable the 'Write Supplier by County Data to Snowflake' button.")
-
+    st.warning("Please upload the formatted file to write Supplier by County Data to Snowflake'.")
+# Add horizontal line
+st.markdown("<hr>", unsafe_allow_html=True)
 
 
