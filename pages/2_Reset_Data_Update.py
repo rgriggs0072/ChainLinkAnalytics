@@ -462,8 +462,12 @@ def format_supplier_by_county(file_content):
     
     # Remove column "TOTAL" (column B)
     df = df.drop(columns=["TOTAL"])
+    
+    #Rename the column
+    df.rename(columns={"Supplier / County": "Supplier"}, inplace=True)
 
-    df_formatted = pd.melt(df, id_vars=["Supplier / County"], var_name="County", value_name="Status")
+
+    df_formatted = pd.melt(df, id_vars=["Supplier"], var_name="County", value_name="Status")
 
     # Change "Once" values to "Yes" or "No"
     df_formatted["Status"] = df_formatted["Status"].apply(lambda x: "Yes" if x == 1 else "No" if pd.isna(x) else x)
@@ -476,6 +480,18 @@ def format_supplier_by_county(file_content):
 # This function will write the Supplier County to a snowflake table for gap report county validation
 #====================================================================================================
 def write_to_snowflake(df_content):
+    # Load Snowflake credentials from the secrets.toml file
+    snowflake_creds = st.secrets["snowflake"]
+
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )
    
     
     # Create a cursor object to execute SQL queries
@@ -544,15 +560,40 @@ with file_container:
 #=================================================================================================
 # Process the formatted spreadsheet with Supplier by County data to snowflake
 #=================================================================================================
+    # uploaded_file = st.file_uploader(":red[Upload formated file to write to snowflake]", type=["xlsx", "xls"])
+    
 
-    # Show the Write to Snowflake button
-    if st.button("Write Supplier by County Data to Snowflake"):
-        if st.session_state.df_formatted is None:
-            st.warning("Please click the 'Reformat Supplier by County Spreadsheet' button to format the data.")
-        else:
-            # Write the DataFrame data to Snowflake table
-            st.write("Writing to Snowflake - df_formatted:")
-            #st.write(st.session_state.df_formatted)
-            write_to_snowflake(st.session_state.df_formatted)
+    # # Show the Write to Snowflake button
+    # if st.button("Write Supplier by County Data to Snowflake"):
+    #     if st.session_state.df_formatted is None:
+    #         st.warning("Please click the 'Reformat Supplier by County Spreadsheet' button to format the data.")
+    #     else:
+    #         # Write the DataFrame data to Snowflake table
+    #         st.write("Writing to Snowflake - df_formatted:")
+    #         #st.write(st.session_state.df_formatted)
+    #         write_to_snowflake(st.session_state.df_formatted)
+            
+
+
+uploaded_file_snowflake = st.file_uploader(":red[Upload formated file to write to snowflake]", type=["xlsx", "xls"])
+
+# Show the Write to Snowflake button
+if st.button("Write Supplier by County Data to Snowflake"):
+    if st.session_state.df_formatted is None:
+        st.warning("Please click the 'Reformat Supplier by County Spreadsheet' button to format the data.")
+    elif uploaded_file_snowflake is None:
+        st.warning("Please upload the formatted file to proceed.")
+    else:
+        # Load the formatted DataFrame from the session state
+        df_formatted = st.session_state.df_formatted
+        
+        # Write the DataFrame data to Snowflake table
+        st.write("Writing to Snowflake - df_formatted:")
+        #st.write(df_formatted)  # Display the formatted data (optional)
+        
+        # Write the data to Snowflake
+        write_to_snowflake(df_formatted)
+        st.success("Data written to Snowflake successfully!")
+
 
 

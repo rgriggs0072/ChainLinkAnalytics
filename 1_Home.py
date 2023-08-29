@@ -1,4 +1,4 @@
-from cgitb import text
+#from cgitb import text
 import streamlit as st
 from streamlit_option_menu import option_menu
 import snowflake.connector
@@ -6,6 +6,7 @@ import pandas as pd
 from PIL import Image
 import plotly.express as px
 import numpy as np
+import base64
 import time
 import altair as alt
 import streamlit.components.v1 as components
@@ -13,22 +14,49 @@ import streamlit.components.v1 as components
 # Set page to wide display to give more room
 st.set_page_config(layout="wide")
 padding_top = 0
-# st.snow()
+
+
+
 
 with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    
 
 
-# This function sets the logo and company name inside the sidebar
-def add_logo(logo_path, width, height):
-    """Read and return a resized logo"""
-    logo = Image.open(logo_path)
-    modified_logo = logo.resize((width, height))
-    return modified_logo
 
-my_logo = add_logo(logo_path="./images/DeltaPacific_Logo.jpg", width=200, height=100)
-st.sidebar.image(my_logo)
-st.sidebar.subheader("Delta Pacific Beverage Co.")
+
+@st.cache_data
+def get_img_as_base64(file):
+    with open(file, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+img = get_img_as_base64("./images/DeltaPacific_Logo.jpg")
+
+page_bg_img = f"""
+<style>
+[data-testid="stSidebar"] > div:first-child {{
+    background-image: url("data:image/jpg;base64,{img}");
+    background-size: 200px;
+    background-repeat: no-repeat;
+    background-position: top calc(140px + 40%);  /* Adjust the space here */
+}}
+</style>
+"""
+
+st.markdown(page_bg_img, unsafe_allow_html=True)
+#st.sidebar.header("Configuration")
+
+# # This function sets the logo and company name inside the sidebar
+# def add_logo(logo_path, width, height):
+#     """Read and return a resized logo"""
+#     logo = Image.open(logo_path)
+#     modified_logo = logo.resize((width, height))
+#     return modified_logo
+
+# my_logo = add_logo(logo_path="./images/DeltaPacific_Logo.jpg", width=200, height=100)
+# st.sidebar.image(my_logo)
+# st.sidebar.subheader("Delta Pacific Beverage Co.")
 
 # Set Page Header
 st.header("Delta Pacific Beverage Chain Dashboard")
@@ -135,7 +163,7 @@ col1, col2 = st.columns([1, 2])
 #======================================================================================================================================
 # call above code to get the data and display barchart
 #=========================================================================================================================================
-# Add centered and styled title above the scatter chart
+
 # Add centered and styled title above the scatter chart in the second column
 col2.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Chain</h1>", unsafe_allow_html=True)
 
@@ -362,26 +390,3 @@ else:
 
  #...
 
-
-
-## Fetch chain schematic data
-#chain_schematic_data = fetch_chain_schematic_data()
-
-## Add centered and styled title above the scatter chart
-#st.markdown("<h1 style='text-align: center; font-size: 18px;'>By Chain, in Schematic Compared Against Product Sold In and Percentage</h1>", unsafe_allow_html=True)
-
-## Create a scatter chart using Altair
-#scatter_chart = alt.Chart(chain_schematic_data).mark_circle().encode(
-#    x='Total_In_Schematic',
-#    y='Purchased',
-#    color='CHAIN_NAME',
-#    tooltip=['CHAIN_NAME', 'Total_In_Schematic', 'Purchased', 'Purchased_Percentage']
-#).properties(
-#    #title="By Chain, Product in Schematic Compared to Sold in and Percentage"
-#).configure_title(
-#    align='center',
-#    fontSize=16  # Adjust the font size as needed
-#).interactive()
-
-## Display the scatter chart using Streamlit
-#st.altair_chart(scatter_chart, use_container_width=True)
