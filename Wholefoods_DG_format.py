@@ -16,8 +16,8 @@ def format_WHOLEFOODS_DistroGrid(workbook):
     st.write("YAY YOU CALLED ME WHOLE FOODS dg CODE")
 
 
-    # Select the Reset Dates sheet
-    ws = workbook['WHOLEFOODS_dg']
+    # Select the distrogrid  sheet
+    ws = workbook['MASTER CORE LIST_NC']
 
     # Insert a new column "Chain_Name" at the beginning and fill it with "WALMART"
     ws.insert_cols(1)
@@ -131,6 +131,11 @@ def format_WHOLEFOODS_DistroGrid(workbook):
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=11, max_col=11):
         for cell in row:
             cell.value = "WHOLE FOODS"
+            
+    # Iterate through the rows and update the 6th column (index 5) to uppercase
+    for row in ws.iter_rows(min_row=2):  # Start from the second row to skip headers
+        cell = row[5]  # 6th column (index 5)
+        cell.value = cell.value.upper()
  
 
 

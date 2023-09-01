@@ -457,7 +457,7 @@ def format_supplier_by_county(file_content):
     df_formatted = None
 
     # Perform data transformation
-    df = pd.read_excel(file_content, sheet_name="Report")
+    df = pd.read_excel(file_content, sheet_name="Products")
     
     # Remove column "TOTAL" (column B)
     df = df.drop(columns=["TOTAL"])

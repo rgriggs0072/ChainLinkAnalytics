@@ -312,6 +312,7 @@ def create_gap_report(conn, salesperson, store, supplier):
     #temp_file_path = os.path.join(download_folder, temp_file_name)
     temp_file_path = "temp.xlsx"
     #df.to_excel(temp_file_path, index=False)
+    #st.write(df)
 
     df.to_excel(temp_file_path, index=False)  # Save the DataFrame to a temporary file
 

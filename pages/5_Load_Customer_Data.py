@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 import numpy as np
 from io import BytesIO
 from openpyxl import Workbook
-import datetime
+from datetime import datetime
 from PIL import Image
 import streamlit.components.v1 as components
 
@@ -181,98 +181,99 @@ if uploaded_file is not None:
 
 
 def format_Products_Dataload(workbook):
-    # Delete all sheets except Products
-    for sheet_name in workbook.sheetnames:
-        if sheet_name != 'Products':
-            workbook.remove(workbook[sheet_name])
-
     # Select the Products sheet
     ws = workbook['Products']
 
-    
-    # Create a new column for Manufacturer
+    # Get the column data from Column G
+    column_g_data = [cell.value for cell in ws['G']]
+
+    # Delete data in Column G
+    for cell in ws['G']:
+        cell.value = None
+
+    # Insert a new column at Column B
     ws.insert_cols(2)
-    ws.cell(row=1, column=2, value='Manufacturer')
 
-  
+    # Populate new Column B with data from Column G
+    for cell, value in zip(ws['B'], column_g_data):
+        cell.value = value
+        
 
+    # Get the column data from Column E
+    column_g_data = [cell.value for cell in ws['E']]
 
-    # Create a new column for Package
-    ws.insert_cols(4)
-    ws.cell(row=1, column=4, value='Package')
+    # Delete data in Column 
+    # for cell in ws['G']:
+    #     cell.value = None
 
+    # # Insert a new column at Column B
+    # ws.insert_cols(4)
 
-       # Create a new column for UPC
-    ws.insert_cols(5)
-    ws.cell(row=1, column=5, value='UPC')
-
-       # Move values from column H to column B
-    for row in ws.iter_rows(min_row=2, min_col=9, max_col=9):
-        for cell in row:
-            cell_offset = ws.cell(row=cell.row, column=2)
-            cell_offset.value = cell.value
-
-
-
-    # Rename column A to Customer_id
-    ws['A1'] = 'Product_id'
-
-    # Move values from column F to column B
-    for row in ws.iter_rows(min_row=2, min_col=7, max_col=7):
-        for cell in row:
-            cell_offset = ws.cell(row=cell.row, column=4)
-            cell_offset.value = cell.value
-
- 
-    # Move values from column D to column C
-    for row in ws.iter_rows(min_row=2, min_col=8, max_col=8):
-        for cell in row:
-            cell_offset = ws.cell(row=cell.row, column=5)
-            cell_offset.value = cell.value
-            cell_offset.value = cell.value
-
-    #Delete column G
-    ws.delete_cols(7)
-
-    #Delete column H
-    ws.delete_cols(8)
-
-    #Delete column H
-    ws.delete_cols(9)
-
-    #Delete column H
-    ws.delete_cols(7)
-
-
-   
-    # Remove all Hyphens in column B
-    for cell in ws['B']:
-        if cell.value is not None and isinstance(cell.value, str):
-            cell.value = cell.value.replace(',', ' ')
-
-    # Remove all Hyphens in column E
-    for cell in ws['C']:
-        if cell.value is not None and isinstance(cell.value, str):
-            cell.value = cell.value.replace('\'', "")
-
-    # Replace all commas with spaces in column C
-    for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
-        for cell in row:
-            if cell.value is not None and isinstance(cell.value, str):
-                cell.value = cell.value.replace(',', ' ')
-
-
-   
-          
-    # Remove all Is Null from column E
-    for cell in ws['E']:
-        if cell.value is None:
-            cell.value = 99
-
-
+    # Populate new Column D with data from Column E
+    for cell, value in zip(ws['D'], column_g_data):
+        cell.value = value
+       
+    # Delete columns E 
+    ws.delete_cols(ws['E'][0].column, amount=1)  # Delete column E
     
+    # Remove hyphens from values in Column E
+    for cell in ws['E']:
+        if isinstance(cell.value, str) and cell.value is not None:
+            cell.value = cell.value.replace('-', '')
 
+    # Get the last row with data
+    last_row = ws.max_row
+
+    # Get the last column with data
+    last_col = ws.max_column
+
+    # Remove commas from cell values in specified columns
+    for row_number in range(2, last_row + 1):
+        for col_number in range(1, last_col + 1):
+            cell_value = ws.cell(row=row_number, column=col_number).value
+            if isinstance(cell_value, str):
+                cell = ws.cell(row=row_number, column=col_number)
+                cell.value = cell_value.replace(',', '')
+                
+        # Remove commas from cell values in specified columns
+    for row_number in range(2, last_row + 1):
+        for col_number in range(1, last_col + 1):
+            cell_value = ws.cell(row=row_number, column=col_number).value
+            if isinstance(cell_value, str):
+                cell = ws.cell(row=row_number, column=col_number)
+                cell.value = cell_value.replace("'", '')
+
+
+                
+
+    # Rename column F to PRODUCT_MANAGER
+    ws['F1'].value = 'PRODUCT_MANAGER'
+
+    # Clear data in the PRODUCT_MANAGER column
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=6, max_col=6):
+        for cell in row:
+            cell.value = None
+
+       
+    # Delete columns G 
+    ws.delete_cols(ws['G'][0].column, amount=1)  # Delete column G
+    
+    # Find the column index for the column you want to fill
+    column_index = 5  # Assuming column E is the Carrier_upc column
+
+    # Fill empty cells with the value 1 in the carrier_upc column
+    for row_number in range(2, ws.max_row + 1):
+        cell = ws.cell(row=row_number, column=column_index)
+        if cell.value is None:
+            cell.value = 999999999999
+    
     return workbook
+
+
+
+
+
+
 
 
 # Add horizontal line
@@ -310,11 +311,14 @@ def write_to_products_snowflake(df, warehouse, database, schema):
     # read Excel file into pandas DataFrame
     df = pd.read_excel(uploaded_file)
     
-   
+    
     
     # Modify DataFrame values directly to replace 'NAN' with empty string ''
     
     df = df.replace('NAN', np.nan)
+    
+    # Replace NaN values with NULL in the DataFrame
+    df.fillna(value='NULL', inplace=True)
     
     # Load Snowflake credentials from the secrets.toml file
     snowflake_creds = st.secrets["snowflake"]
@@ -330,7 +334,12 @@ def write_to_products_snowflake(df, warehouse, database, schema):
     )
     
     
-    
+    # Convert the DataFrame to a list of tuples
+    data_tuples = [tuple(row) for row in df.values]
+
+    # Get the current timestamp
+    current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+   
     
    # write DataFrame to Snowflake
     cursor = conn.cursor()
@@ -344,21 +353,30 @@ def write_to_products_snowflake(df, warehouse, database, schema):
         CAST(SUPPLIER AS VARCHAR) AS SUPPLIER,
         CAST(PRODUCT_NAME AS VARCHAR) AS PRODUCT_NAME,
         CAST(PACKAGE AS VARCHAR) AS PACKAGE,
-        CARRIER_UPC,
-        CAST(PRODUCT_MANAGER AS VARCHAR) AS PRODUCT_MANAGER
+        CAST(CARRIER_UPC AS NUMBER) AS CARRIER_UPC,
+        CAST(PRODUCT_MANAGER AS VARCHAR) AS PRODUCT_MANAGER,
+        CAST('{current_timestamp}' AS TIMESTAMP) AS UPLOAD_DATE
     FROM
         (VALUES {values}) AS tmp(
             PRODUCT_ID,
             SUPPLIER,
             PRODUCT_NAME,
             PACKAGE,
-            UPC,
+            CARRIER_UPC,
             PRODUCT_MANAGER
         );
     """
 
+    #st.write (sql_query)
+     # Execute the SQL query
+    cursor.execute(sql_query)
 
+    # Commit the changes to the Snowflake table
+    conn.commit()
 
+    # Close the cursor and the connection
+    cursor.close()
+    conn.close()
 
 
 

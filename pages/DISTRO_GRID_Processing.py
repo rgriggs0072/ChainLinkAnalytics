@@ -17,6 +17,14 @@ from Sprouts_DG_format import format_SPROUTS_DistroGrid
 from Smart_Final_DG_format import format_SMART_FINAL_DistroGrid
 from Distro_Grid_Snowflake_Uploader import upload_SAFEWAY_distro_grid_to_snowflake
 from Distro_Grid_Snowflake_Uploader import upload_FOODMAXX_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_WHOLEFOODS_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_SAVEMART_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_SMART_FINAL_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_LUCKYS_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_RALEYS_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_SPROUTS_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_TARGET_distro_grid_to_snowflake
+from Distro_Grid_Snowflake_Uploader import upload_WALMART_distro_grid_to_snowflake
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
 # from streamlit_extras.app_logo import add_logo #can be removed
@@ -394,11 +402,19 @@ for uploaded_file in uploaded_files:
 
     # Extract the file name without the extension
     file_name_without_extension = os.path.splitext(file_name)[0]
+    
+    # Print the file name without extension for debugging
+    print("File Name Without Extension:", file_name_without_extension)
 
     # Use regular expression to extract the chain name from the file name
-    chain_name_match = re.search(r"formatted_(\w+\s+\w+)_spreadsheet", file_name_without_extension)
+    #chain_name_match = re.search(r"formatted_(\w+\s+\w+)_spreadsheet", file_name_without_extension)
+
+    chain_name_match = re.search(r"formatted_(\w+)_spreadsheet", file_name_without_extension)
+
+    print("Extracted Chain Name:", chain_name_match)
     if chain_name_match:
         chain_name = chain_name_match.group(1)
+        
     else:
         # If the chain name cannot be extracted, assume it's not formatted correctly
         st.warning(f"The file name '{file_name}' is not formatted correctly.")
@@ -428,25 +444,29 @@ for uploaded_file in uploaded_files:
             elif selected_option == 'FOOD MAXX':
                 upload_FOODMAXX_distro_grid_to_snowflake(df, schema, table_name, selected_option)
             
-            #elif selected_option == "LUCKYS":
-            #    upload_reset_SCH_LUCKY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            #elif selected_option == "WALMART":
-            #    upload_reset_SCH_WALMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            #    # Add more if-else statements for other stores as needed
-            #elif selected_option == "RALEYS":
-            #    upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            ## Add more if-else statements for other stores as needed
+            elif selected_option == "WHOLEFOODS":
+               upload_WHOLEFOODS_distro_grid_to_snowflake(df, schema, table_name, selected_option)    
+
+            elif selected_option == "LUCKYS":
+                upload_LUCKYS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
+                
+            elif selected_option == "WALMART":
+                upload_WALMART_distro_grid_to_snowflake(df, schema, table_name, selected_option)
             
-            #elif selected_option == "SMART_FINAL":
-            #    upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            #elif selected_option == "SPROUTS":
-            #    upload_reset_SCH_SPROUTS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            #elif selected_option == "TARGET":
-            #    upload_reset_SCH_TARGET_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            #elif selected_option == "WHOLEFOODS":
-            #    upload_reset_SCH_WHOLEFOODS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-            #elif selected_option == "SAVEMART":
-            #     upload_reset_SCH_SAVEMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
+            elif selected_option == "RALEYS":
+                upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
+                        
+            elif selected_option == "SMART_FINAL":
+                upload_SMART_FINAL_distro_grid_to_snowflake(df, schema, table_name, selected_option)
+            
+            elif selected_option == "SPROUTS":
+                upload_SPROUTS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
+           
+            elif selected_option == "TARGET":
+                upload_TARGET_distro_grid_to_snowflake(df, schema, table_name, selected_option)
+            #
+            elif selected_option == "SAVEMART":
+                upload_SAVEMART_distro_grid_to_snowflake(df, schema, table_name, selected_option)
             # Add more if-else statements for other stores as needed
             else:
             
@@ -509,27 +529,4 @@ def create_replace_distro_grid_table():
     # Close the connection
     conn.close()
 
-##====================================================================================================================
-## The code below adds a button to th sidebar that will take the distribution grid live wipping out all old data
-##====================================================================================================================
 
-
-## Streamlit app code
-#st.sidebar.subheader(":blue[Distro Grid Go-Live Utility]")
-
-## Create a form in the Streamlit sidebar
-#with st.sidebar.form("go_live_form"):
-#    st.subheader("Go Live with New Distribution Grid")
-#    st.write(":red[By clicking 'Go Live with New Distribution Grid', you will delete your current distro_grid table and perform the data migration.]")
-#    st.write(":red[This action cannot be undone.]")
-#    submitted = st.form_submit_button("Go Live with Distribution Grid Go Live")
-    
-#    # If the form is submitted, display a confirmation dialog
-#    if submitted:
-#        confirmation = st.warning("Are you sure you want to proceed? This action cannot be undone.",icon="⚠️")
-#        if confirmation.button("Yes, I want to proceed"):
-#            result = create_replace_distro_grid_table()
-#            if result:
-#                st.sidebar.success("New Distro_Grid table created/replaced and data moved successfully!")
-#            else:
-#                st.sidebar.error("An error occurred while creating/replacing the Distro_Grid table and moving data.")
