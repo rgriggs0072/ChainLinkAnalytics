@@ -25,38 +25,38 @@ with open('style.css') as f:
 
 
 
-@st.cache_data
-def get_img_as_base64(file):
-    with open(file, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+# @st.cache_data
+# def get_img_as_base64(file):
+#     with open(file, "rb") as f:
+#         data = f.read()
+#     return base64.b64encode(data).decode()
 
-img = get_img_as_base64("./images/DeltaPacific_Logo.jpg")
+# img = get_img_as_base64("./images/DeltaPacific_Logo.jpg")
 
-page_bg_img = f"""
-<style>
-[data-testid="stSidebar"] > div:first-child {{
-    background-image: url("data:image/jpg;base64,{img}");
-    background-size: 200px;
-    background-repeat: no-repeat;
-    background-position: top calc(140px + 40%);  /* Adjust the space here */
-}}
-</style>
-"""
+# page_bg_img = f"""
+# <style>
+# [data-testid="stSidebar"] > div:first-child {{
+#     background-image: url("data:image/jpg;base64,{img}");
+#     background-size: 200px;
+#     background-repeat: no-repeat;
+#     background-position: top calc(140px + 40%);  /* Adjust the space here */
+# }}
+# </style>
+# """
 
 st.markdown(page_bg_img, unsafe_allow_html=True)
-#st.sidebar.header("Configuration")
+st.sidebar.header("Configuration")
 
-# # This function sets the logo and company name inside the sidebar
-# def add_logo(logo_path, width, height):
-#     """Read and return a resized logo"""
-#     logo = Image.open(logo_path)
-#     modified_logo = logo.resize((width, height))
-#     return modified_logo
+# This function sets the logo and company name inside the sidebar
+def add_logo(logo_path, width, height):
+    """Read and return a resized logo"""
+    logo = Image.open(logo_path)
+    modified_logo = logo.resize((width, height))
+    return modified_logo
 
-# my_logo = add_logo(logo_path="./images/DeltaPacific_Logo.jpg", width=200, height=100)
-# st.sidebar.image(my_logo)
-# st.sidebar.subheader("Delta Pacific Beverage Co.")
+my_logo = add_logo(logo_path="./images/DeltaPacific_Logo.jpg", width=200, height=100)
+st.sidebar.image(my_logo)
+st.sidebar.subheader("Delta Pacific Beverage Co.")
 
 # Set Page Header
 st.header("Delta Pacific Beverage Chain Dashboard")
@@ -303,7 +303,7 @@ def fetch_scatter_supplier_schematic_summary_data(selected_suppliers):
         "Purchased",
         "Purchased_Percentage"
         
-    FROM 
+    FROM
         DATASETS.DATASETS.schematic_summary
     WHERE
         SUPPLIER IN ({supplier_conditions});
