@@ -224,8 +224,8 @@ def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
     CAST(ADDRESS AS VARCHAR) AS ADDRESS, \
     CAST(SALESPERSON AS VARCHAR) AS SALESPERSON, \
     CAST(PRODUCT_NAME AS VARCHAR) AS PRODUCT_NAME, \
-    CAST(UPC AS VARCHAR) AS UPC, \
-    CAST(PURCHASED_YES_NO AS VARCHAR) AS PURCHASED_YES_NO \
+    CAST(UPC AS NUMERIC) AS UPC, \
+    CAST(PURCHASED_YES_NO AS NUMERIC) AS PURCHASED_YES_NO \
     FROM (VALUES {', '.join([str(tuple(df.iloc[i].fillna(np.nan).values)) for i in range(len(df))])}) \
     AS tmp(STORE_NUMBER, STORE_NAME, ADDRESS, SALESPERSON, PRODUCT_NAME, UPC, PURCHASED_YES_NO);"
 
