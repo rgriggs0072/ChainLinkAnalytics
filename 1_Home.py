@@ -43,8 +43,9 @@ with open('style.css') as f:
 # }}
 # </style>
 # """
+#st.markdown(page_bg_img, unsafe_allow_html=True)
 
-st.markdown(page_bg_img, unsafe_allow_html=True)
+
 st.sidebar.header("Configuration")
 
 # This function sets the logo and company name inside the sidebar
