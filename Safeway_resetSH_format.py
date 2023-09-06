@@ -15,7 +15,7 @@ def format_SAFEWAY_Schedule(workbook):
     
     # Delete all sheets except Reset Dates
     for sheet_name in workbook.sheetnames:
-        if sheet_name != 'SAFEWAY_RESET_DATES':
+        if sheet_name != 'Safeway NorCal Fall Assortment':
                 workbook.remove(workbook[sheet_name])
 
     # Select the Reset Dates sheet

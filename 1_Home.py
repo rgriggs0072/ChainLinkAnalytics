@@ -174,18 +174,22 @@ col2.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summar
 # Calculate the pruchased percentage and display in the summary data
 #==============================================================================================================================================
 
+# Calculate the difference between total in schematic and total purchased
+difference = total_in_schematic - total_purchased
+
 # Calculate the overall purchased percentage
 overall_percentage = (total_purchased / total_in_schematic) * 100
 
 # Display the summary data in the first column
 col1.markdown("<div style='text-align: center; margin-top: 10px;'>", unsafe_allow_html=True)
-#col2.markdown(f"<div style='{summary_style}'>", unsafe_allow_html=True)
 col1.write("Execution Summary:")
 col1.write(f"Total In Schematic: {total_in_schematic}")
 col1.write(f"Total Purchased: {total_purchased}")
+col1.write(f"Gaps: {difference}")
 col1.write(f"Overall Purchased Percentage: {overall_percentage:.2f}%")
 col1.markdown("</div>", unsafe_allow_html=True)
 col1.markdown("</div>", unsafe_allow_html=True)
+
 
 # Display the bar chart in the first column
 col2.altair_chart(bar_chart, use_container_width=False)
