@@ -265,7 +265,8 @@ def format_SAFEWAY_Schedule(workbook):
     ws.cell(row=1, column=12, value='STATUS')
     ws.cell(row=1, column=13, value='NOTES')
 
-
+    # Delete columns M 
+    ws.delete_cols(13)
 
     return workbook
 
