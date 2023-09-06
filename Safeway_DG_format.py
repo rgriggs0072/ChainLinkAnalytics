@@ -14,7 +14,7 @@ def format_SAFEWAY_DistroGrid(workbook):
 
 
     # Select the Reset Dates sheet
-    ws = workbook['SAFEWAY_dg']
+    ws = workbook['Fall 2023 Assortment Grid- Final']
 
 
     # Get the maximum row number in column B (STORE_Number)
