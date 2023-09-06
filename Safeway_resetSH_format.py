@@ -13,13 +13,13 @@ def format_SAFEWAY_Schedule(workbook):
 
     st.write("YAY YOU CALLED ME SAFEWAY")
     
-    # Delete all sheets except Reset Dates
-    for sheet_name in workbook.sheetnames:
-        if sheet_name != 'Mainland':
-                workbook.remove(workbook[sheet_name])
+    # # Delete all sheets except Reset Dates
+    # for sheet_name in workbook.sheetnames:
+    #     if sheet_name != 'Mainland':
+    #             workbook.remove(workbook[sheet_name])
 
     # Select the Reset Dates sheet
-    ws = workbook['SAFEWAY_RESET_DATES']
+    ws = workbook['Mainland']
     #remove_hidden_rows_and_columns(ws)
 
     # Remove filter from the worksheet
@@ -34,7 +34,7 @@ def format_SAFEWAY_Schedule(workbook):
 
     
     # Determine the number of rows with data
-    sheet_name = "SAFEWAY_RESET_DATES"  # Update with the actual sheet name
+    sheet_name = "Mainland"  # Update with the actual sheet name
     ws = workbook[sheet_name]
     max_row = ws.max_row
     for row in reversed(range(1, max_row + 1)):
