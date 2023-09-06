@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 #====================================================================================================================
 def format_SAFEWAY_Schedule(workbook):
 
-    st.write("YAY YOU CALLED ME SAFEWAY")
+    #st.write("YAY YOU CALLED ME SAFEWAY")
     
     # # Delete all sheets except Reset Dates
     # for sheet_name in workbook.sheetnames:
@@ -265,7 +265,7 @@ def format_SAFEWAY_Schedule(workbook):
     ws.cell(row=1, column=12, value='STATUS')
     ws.cell(row=1, column=13, value='NOTES')
 
-    # Delete columns M 
+    # Delete column M 
     ws.delete_cols(13)
 
     return workbook
