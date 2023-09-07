@@ -160,19 +160,67 @@ bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
 #=======================================================================================================================================
 
 # Create a layout with two columns
-col1, col2 = st.columns([1, 2])
+col1, col2, col3 = st.columns([20, 30, 50], gap="small")
 #======================================================================================================================================
 # call above code to get the data and display barchart
 #=========================================================================================================================================
 
 # Add centered and styled title above the scatter chart in the second column
-col2.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Chain</h1>", unsafe_allow_html=True)
+col1.markdown("<h1 style='text-align: center; font-size: 18px;'>Salesperson Store Count</h1>", unsafe_allow_html=True)
 
-# Display the scatter chart in the second column
+# Load Snowflake credentials from the secrets.toml file
+snowflake_creds = st.secrets["snowflake"]
+# Connect to Snowflake (replace with your Snowflake credentials)
+conn = snowflake.connector.connect(
+       account=snowflake_creds["account"],
+       user=snowflake_creds["user"],
+       password=snowflake_creds["password"],
+       warehouse=snowflake_creds["warehouse"],
+       database=snowflake_creds["database"],
+       schema=snowflake_creds["schema"]
+)    
 
-#===============================================================================================================================
-# Calculate the pruchased percentage and display in the summary data
-#==============================================================================================================================================
+# Execute the SQL query to retrieve the salesperson's store count
+query = pd.read_sql_query('''
+                          SELECT SALESPERSON, TOTAL_STORES FROM DATASETS.DATASETS.SALESPERSON_STORE_COUNT
+                          ''',conn)
+# cursor = conn.cursor()
+# cursor.execute(query)
+
+# # Fetch all the results into a list of tuples
+# results = cursor.fetchall()
+
+# # Close the Snowflake connection
+# cursor.close()
+conn.close()
+
+# Create a DataFrame from the query results
+salesperson_df = pd.DataFrame(query, columns=['SALESPERSON', 'TOTAL_STORES'])
+
+# Rename the columns
+salesperson_df = salesperson_df.rename(columns={'SALESPERSON': 'Salesperson', 'TOTAL_STORES': 'Stores'})
+
+
+# Limit the number of displayed rows to 6
+limited_salesperson_df = salesperson_df.head(100)
+
+# Define the maximum height for the table container
+max_height = '365px'
+
+# Adjust the width of the table by changing the 'width' property
+table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #EEEEEE; padding: 1% 2% 2% 0%; border-radius: 10px; border-left: 0.5rem solid #9AD8E1 !important; box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important; width: 100%;"
+
+# Wrap the table in an HTML div with the specified style
+table_html = limited_salesperson_df.to_html(classes=["table", "table-striped"], escape=False, index=False)
+table_with_scroll = f"<div style='{table_style}'>{table_html}</div>"
+
+# Display the table in col1
+col1.markdown(table_with_scroll, unsafe_allow_html=True)
+
+
+
+# Add centered and styled title above the scatter chart in the second column
+#col2.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Chain</h1>", unsafe_allow_html=True)
 
 # Calculate the difference between total in schematic and total purchased
 difference = total_in_schematic - total_purchased
@@ -180,19 +228,17 @@ difference = total_in_schematic - total_purchased
 # Calculate the overall purchased percentage
 overall_percentage = (total_purchased / total_in_schematic) * 100
 
-# Display the summary data in the first column
-col1.markdown("<div style='text-align: center; margin-top: 10px;'>", unsafe_allow_html=True)
-col1.write("Execution Summary:")
-col1.write(f"Total In Schematic: {total_in_schematic}")
-col1.write(f"Total Purchased: {total_purchased}")
-col1.write(f"Gaps: {difference}")
-col1.write(f"Overall Purchased Percentage: {overall_percentage:.2f}%")
-col1.markdown("</div>", unsafe_allow_html=True)
-col1.markdown("</div>", unsafe_allow_html=True)
+# Use Streamlit's built-in centering option
+with col2:
+    st.markdown("Execution Summary:")
+    st.write(f"Total In Schematic: {total_in_schematic}")
+    st.write(f"Total Purchased: {total_purchased}")
+    st.write(f"Total Gaps: {difference}")
+    st.write(f"Overall Purchased Percentage: {overall_percentage:.2f}%")
 
 
 # Display the bar chart in the first column
-col2.altair_chart(bar_chart, use_container_width=False)
+col3.altair_chart(bar_chart, use_container_width=False)
 
 #============================================================================================================================================
 # End Barchart and summary by chain

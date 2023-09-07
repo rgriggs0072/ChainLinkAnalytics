@@ -16,6 +16,7 @@ def format_SAFEWAY_DistroGrid(workbook):
     # Select the Reset Dates sheet
     ws = workbook['Safeway_NorCal']
 
+    
 
     # Get the maximum row number in column B (STORE_Number)
     max_row_b = ws.max_row
@@ -77,7 +78,7 @@ def format_SAFEWAY_DistroGrid(workbook):
     ## Change ADDED and MAINTAIN to 1 IN Column H
     for cell in ws['H']:
         if cell.value is not None:
-            cell.value = str(cell.value).replace('ADDED', '1').replace('MAINTAIN', '1')
+            cell.value = str(cell.value).replace('Added', '1').replace('Maintain', '1')
 
      # Get the maximum row number in column b
     max_row_b = ws.max_row
