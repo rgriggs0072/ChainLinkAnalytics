@@ -12,7 +12,9 @@ import altair as alt
 import streamlit.components.v1 as components
 
 # Set page to wide display to give more room
-st.set_page_config(layout="wide")
+st.set_page_config(
+    layout="wide",
+    initial_sidebar_state="collapsed")
 padding_top = 0
 
 
