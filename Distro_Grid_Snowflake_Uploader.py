@@ -1185,6 +1185,7 @@ def upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
 
         ### Replace 'NAN' values with NULL
         df = df.replace('NAN', np.nan).fillna(value='', method=None)
+        
         ## Convert the "upc" column to numpy int64 data type, which supports larger integers
         df['UPC'] = df['UPC'].astype(np.int64)
 
@@ -1195,7 +1196,7 @@ def upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
         df['SKU'] = df['SKU'].astype(np.int64)
 
         ### Print the DataFrame before insertion
-        print("DataFrame to be inserted:")
+        #print("DataFrame to be inserted:")
         ##print(df)
 
         ## Log the start of the SQL activity
@@ -1210,7 +1211,7 @@ def upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
         cursor_archive.execute("SELECT * FROM DISTRO_GRID WHERE STORE_NAME = %s", (selected_option,))
         data_to_archive = cursor_archive.fetchall()
         
-        st.write(df)
+       #st.write(df)
 
         ## Print the DataFrame before insertion
         ##print(selected_option)
@@ -1235,7 +1236,7 @@ def upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
             data_to_archive_with_date = [row + (current_date,) for row in data_to_archive]
 
             # Chunk the data into smaller batches
-            chunk_size = 1000
+            chunk_size = 5000
             chunks = [data_to_archive_with_date[i:i + chunk_size] for i in range(0, len(data_to_archive_with_date), chunk_size)]
 
             # Execute the query with parameterized values for each chunk
@@ -1295,7 +1296,7 @@ def upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
         # Create a cursor object
         cursor = conn.cursor()
         # Chunk the DataFrame into smaller batches
-        chunk_size = 1000  # Adjust the chunk size as per your needs
+        chunk_size = 5000  # Adjust the chunk size as per your needs
         chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
 
         # Execute the query with parameterized values for each chunk
@@ -1558,7 +1559,7 @@ def upload_TARGET_distro_grid_to_snowflake(df, schema, table_name, selected_opti
         cursor_archive.execute("SELECT * FROM DISTRO_GRID WHERE STORE_NAME = %s", (selected_option,))
         data_to_archive = cursor_archive.fetchall()
         
-        st.write(df)
+        #st.write(df)
 
         ## Print the DataFrame before insertion
         ##print(selected_option)
@@ -1583,7 +1584,7 @@ def upload_TARGET_distro_grid_to_snowflake(df, schema, table_name, selected_opti
             data_to_archive_with_date = [row + (current_date,) for row in data_to_archive]
 
             # Chunk the data into smaller batches
-            chunk_size = 1000
+            chunk_size = 5000
             chunks = [data_to_archive_with_date[i:i + chunk_size] for i in range(0, len(data_to_archive_with_date), chunk_size)]
 
             # Execute the query with parameterized values for each chunk
@@ -1643,7 +1644,7 @@ def upload_TARGET_distro_grid_to_snowflake(df, schema, table_name, selected_opti
         # Create a cursor object
         cursor = conn.cursor()
         # Chunk the DataFrame into smaller batches
-        chunk_size = 1000  # Adjust the chunk size as per your needs
+        chunk_size = 5000  # Adjust the chunk size as per your needs
         chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
 
         # Execute the query with parameterized values for each chunk

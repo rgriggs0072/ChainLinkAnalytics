@@ -52,9 +52,14 @@ def format_RALEYS_Schedule(workbook):
     
     # Rename the sheet to "Reset_Dates"
     ws.title = 'Reset_Dates'
+    
+    # Remove filter from the worksheet
+    ws.auto_filter.ref = None
+    
+    
 
     # Delete row 2-5
-    ws.delete_rows(1, 5)
+    ws.delete_rows(1,5)
 
     # Create new column A to hold store number
     ws.insert_cols(1)
@@ -130,42 +135,57 @@ def format_RALEYS_Schedule(workbook):
         ws.cell(row=index, column=12).value = None
     
         
-    # Remove all TBD Remodel from column I
-    for cell in ws['I']:
+    # Remove all TBD Remodel from column J
+    for cell in ws['J']:
         if cell.value is not None:
             cell.value = str(cell.value).replace('TBD REMODEL', '1/1/1900')
-
-    # Remove all - from column I
-    for cell in ws['I']:
+            
+     # Remove all TBD Remodel from column J
+    for cell in ws['J']:
         if cell.value is not None:
-            cell.value = str(cell.value).replace('-', '1/1/1900')
+            cell.value = str(cell.value).replace('The store receives schematics ', '1/1/1900')
 
     # Remove all - from column J
     for cell in ws['J']:
         if cell.value is not None:
+            cell.value = str(cell.value).replace('-', '1/1/1900')
+
+    # Remove all - from column I
+    for cell in ws['K']:
+        if cell.value is not None:
             cell.value = str(cell.value).replace('-', '6:00 AM')
+            
+    # Remove all - from column I
+    for cell in ws['K']:
+        if cell.value is not None:
+            cell.value = str(cell.value).replace('from Raleys', '6:00 AM')
+            
+    # Remove all - from column I
+    for cell in ws['K']:
+        if cell.value is not None:
+            cell.value = str(cell.value).replace('change', '6:00 AM')
 
     
 
         
 
   
-    if ws.dimensions is not None:
-        # Iterate over column I to convert text to number and format as date
-        for row in ws.iter_rows(min_row=2, min_col=9, max_col=9):
-            for cell in row:
-                if cell.value and cell.value.strip():
-                    try:
-                        cell.value = float(cell.value)
-                        cell.number_format = 'mm/dd/yyyy'
-                        print(f"Converting cell {cell.coordinate} to float: {cell.value}")
-                        if cell.value == 1:
-                            cell.value = datetime.datetime(1900, 1, 1)
-                        else:
-                            cell.value = datetime.datetime(1900, 1, 1) + datetime.timedelta(days=(cell.value - 1))
-                        print(f"Resulting value for cell {cell.coordinate}: {cell.value}")
-                    except ValueError:
-                        print(f"Failed to convert cell {cell.coordinate} to float.")
+    # if ws.dimensions is not None:
+    #     # Iterate over column I to convert text to number and format as date
+    #     for row in ws.iter_rows(min_row=2, min_col=9, max_col=9):
+    #         for cell in row:
+    #             if cell.value and cell.value.strip():
+    #                 try:
+    #                     cell.value = float(cell.value)
+    #                     cell.number_format = 'mm/dd/yyyy'
+    #                     print(f"Converting cell {cell.coordinate} to float: {cell.value}")
+    #                     if cell.value == 1:
+    #                         cell.value = datetime.datetime(1900, 1, 1)
+    #                     else:
+    #                         cell.value = datetime.datetime(1900, 1, 1) + datetime.timedelta(days=(cell.value - 1))
+    #                     print(f"Resulting value for cell {cell.coordinate}: {cell.value}")
+    #                 except ValueError:
+    #                     print(f"Failed to convert cell {cell.coordinate} to float.")
 
        
 
@@ -402,7 +422,7 @@ def format_RALEYS_Schedule(workbook):
     time_value = "1900-01-01"
 
     # Iterate over the cells in column J
-    for row in ws.iter_rows(min_row=2, min_col=10, max_col=10):
+    for row in ws.iter_rows(min_row=2, min_col=11, max_col=11):
         for cell in row:
             # Check if the cell is empty
             if cell.value is "":

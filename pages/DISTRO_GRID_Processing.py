@@ -158,22 +158,23 @@ if not options:
 else:
     # Create the dropdown in Streamlit
     
-        selected_option = st.selectbox(':red[Select the Chain Distro Grid to format]', options + ['Add new option...'], key="existing_option")
+ with file_container:
+     selected_option = st.selectbox(':red[Select the Chain Distro Grid to format]', options + ['Add new option...'], key="existing_option")
 
         # Check if the selected option is missing and allow the user to add it
-        if selected_option == 'Add new option...':
-            st.write("You selected: Add new option...")
+if selected_option == 'Add new option...':
+    st.write("You selected: Add new option...")
         
-            # Show the form to add a new option
-            with st.form(key='add_option_form', clear_on_submit=True):
-                new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
-                submit_button = st.form_submit_button('Add Option')
+    # Show the form to add a new option
+    with st.form(key='add_option_form', clear_on_submit=True):
+        new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
+        submit_button = st.form_submit_button('Add Option')
             
-                if submit_button and new_option:
-                    options.append(new_option)
-                    update_options(options)
-                    st.success('Option added successfully!')
-                    st.session_state.option_added = True
+        if submit_button and new_option:
+            options.append(new_option)
+            update_options(options)
+            st.success('Option added successfully!')
+            st.session_state.option_added = True
 
             # Clear the text input field
             st.session_state.new_option = ""
@@ -191,7 +192,8 @@ else:
 # Add the file uploader inside the container
 
     
-uploaded_file = st.file_uploader(":red[Browse or drag here the Distribution Grid to Format]", type=["xlsx"])
+with file_container:
+    uploaded_file = st.file_uploader(":red[Browse or drag here the Distribution Grid to Format]", type=["xlsx"])
 
 
     # Add horizontal line
@@ -484,49 +486,49 @@ for uploaded_file in uploaded_files:
         
 
 
-def create_replace_distro_grid_table():
+# def create_replace_distro_grid_table():
     
     
-    # Get the current date and time
-    current_date_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+#     # Get the current date and time
+#     current_date_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Define the table names
-    backup_table_name = f"DISTRO_GRID_{current_date_time}"
-    distro_grid_table_name = "DISTRO_GRID_testing"
-    distro_grid_temp_table_name = "DISTRO_GRID_TEMP"
+#     # Define the table names
+#     backup_table_name = f"DISTRO_GRID_{current_date_time}"
+#     distro_grid_table_name = "DISTRO_GRID_testing"
+#     distro_grid_temp_table_name = "DISTRO_GRID_TEMP"
     
-    # Create a backup table with the current date and time
-    create_backup_query = f"CREATE OR REPLACE TABLE {backup_table_name} AS SELECT * FROM {distro_grid_table_name};"
+#     # Create a backup table with the current date and time
+#     create_backup_query = f"CREATE OR REPLACE TABLE {backup_table_name} AS SELECT * FROM {distro_grid_table_name};"
     
-    # Truncate the distro_grid table
-    truncate_distro_grid_query = f"TRUNCATE TABLE {distro_grid_table_name};"
+#     # Truncate the distro_grid table
+#     truncate_distro_grid_query = f"TRUNCATE TABLE {distro_grid_table_name};"
     
-    # Move data from distro_grid_temp to distro_grid
-    move_data_query = f"INSERT INTO {distro_grid_table_name} SELECT * FROM {distro_grid_temp_table_name};"
+#     # Move data from distro_grid_temp to distro_grid
+#     move_data_query = f"INSERT INTO {distro_grid_table_name} SELECT * FROM {distro_grid_temp_table_name};"
     
-    # Truncate the distro_grid_temp table
-    truncate_distro_grid_temp_query = f"TRUNCATE TABLE {distro_grid_temp_table_name};"
+#     # Truncate the distro_grid_temp table
+#     truncate_distro_grid_temp_query = f"TRUNCATE TABLE {distro_grid_temp_table_name};"
     
-    # Execute the queries
-    cursor = conn.cursor()
-    cursor.execute(create_backup_query)
-    cursor.execute(truncate_distro_grid_query)
-    cursor.execute(move_data_query)
-    cursor.execute(truncate_distro_grid_temp_query)
+#     # Execute the queries
+#     cursor = conn.cursor()
+#     cursor.execute(create_backup_query)
+#     cursor.execute(truncate_distro_grid_query)
+#     cursor.execute(move_data_query)
+#     cursor.execute(truncate_distro_grid_temp_query)
     
-    # Update the metadata table
-    metadata_table_name = "METADATA"  # Replace with your metadata table name
-    status_query = f"""
-    UPDATE {metadata_table_name}
-    SET STATUS = CASE
-        WHEN STATUS = 'ACTIVE' THEN 'ARCHIVE'
-        ELSE 'ACTIVE'
-    END
-    WHERE TABLE_NAME = '{distro_grid_table_name}'
-    """
-    cursor.execute(status_query)
+#     # Update the metadata table
+#     metadata_table_name = "METADATA"  # Replace with your metadata table name
+#     status_query = f"""
+#     UPDATE {metadata_table_name}
+#     SET STATUS = CASE
+#         WHEN STATUS = 'ACTIVE' THEN 'ARCHIVE'
+#         ELSE 'ACTIVE'
+#     END
+#     WHERE TABLE_NAME = '{distro_grid_table_name}'
+#     """
+#     cursor.execute(status_query)
     
-    # Close the connection
-    conn.close()
+#     # Close the connection
+#     conn.close()
 
 

@@ -276,11 +276,6 @@ def fetch_supplier_names():
     cursor.close()
     return supplier_names
 
-# Create a sidebar select widget for selecting suppliers
-#selected_suppliers = st.sidebar.multiselect("Select Suppliers", fetch_supplier_names())
-
-# Close the Snowflake connection
-#conn.close()
 
 
 
