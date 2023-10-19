@@ -361,7 +361,7 @@ def upload_FOODMAXX_distro_grid_to_snowflake(df, schema, table_name, selected_op
             data_to_archive_with_date = [row + (current_date,) for row in data_to_archive]
 
             # Chunk the data into smaller batches
-            chunk_size = 1000
+            chunk_size = 5000
             chunks = [data_to_archive_with_date[i:i + chunk_size] for i in range(0, len(data_to_archive_with_date), chunk_size)]
 
             # Execute the query with parameterized values for each chunk
@@ -421,7 +421,7 @@ def upload_FOODMAXX_distro_grid_to_snowflake(df, schema, table_name, selected_op
         # Create a cursor object
         cursor = conn.cursor()
         # Chunk the DataFrame into smaller batches
-        chunk_size = 1000  # Adjust the chunk size as per your needs
+        chunk_size = 5000  # Adjust the chunk size as per your needs
         chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
 
         # Execute the query with parameterized values for each chunk
@@ -711,7 +711,7 @@ def upload_SAVEMART_distro_grid_to_snowflake(df, schema, table_name, selected_op
             data_to_archive_with_date = [row + (current_date,) for row in data_to_archive]
 
             # Chunk the data into smaller batches
-            chunk_size = 1000
+            chunk_size = 5000
             chunks = [data_to_archive_with_date[i:i + chunk_size] for i in range(0, len(data_to_archive_with_date), chunk_size)]
 
             # Execute the query with parameterized values for each chunk
@@ -771,7 +771,7 @@ def upload_SAVEMART_distro_grid_to_snowflake(df, schema, table_name, selected_op
         # Create a cursor object
         cursor = conn.cursor()
         # Chunk the DataFrame into smaller batches
-        chunk_size = 1000  # Adjust the chunk size as per your needs
+        chunk_size = 5000  # Adjust the chunk size as per your needs
         chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
 
         # Execute the query with parameterized values for each chunk
@@ -1060,7 +1060,7 @@ def upload_LUCKYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
             data_to_archive_with_date = [row + (current_date,) for row in data_to_archive]
 
             # Chunk the data into smaller batches
-            chunk_size = 1000
+            chunk_size = 5000
             chunks = [data_to_archive_with_date[i:i + chunk_size] for i in range(0, len(data_to_archive_with_date), chunk_size)]
 
             # Execute the query with parameterized values for each chunk
@@ -1120,7 +1120,7 @@ def upload_LUCKYS_distro_grid_to_snowflake(df, schema, table_name, selected_opti
         # Create a cursor object
         cursor = conn.cursor()
         # Chunk the DataFrame into smaller batches
-        chunk_size = 1000  # Adjust the chunk size as per your needs
+        chunk_size = 5000  # Adjust the chunk size as per your needs
         chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
 
         # Execute the query with parameterized values for each chunk

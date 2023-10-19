@@ -219,7 +219,7 @@ with file_container:
             elif selected_option == 'FOOD MAXX': #ADD THIS CONDITION FOR 'Food Maxx' OPTION
                 formatted_workbook = format_FOODMAXX_DistroGrid(workbook)
 
-            elif selected_option == 'LUCKYS': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
+            elif selected_option == 'LUCKY': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
                 formatted_workbook = format_LUCKYS_DistroGrid(workbook)
             
             elif selected_option == 'SAFEWAY':  # Add this condition for 'SAFEWAY' option
@@ -228,7 +228,7 @@ with file_container:
             elif selected_option == 'WALMART': #ADD THIS CONDITION FOR 'WALMART' OPTION
                 formatted_workbook = format_WALMART_DistroGrid(workbook)
 
-            elif selected_option == 'SAVEMART': #ADD THIS CONDITION FOR 'Save Mart' OPTION
+            elif selected_option == 'SAVE MART': #ADD THIS CONDITION FOR 'Save Mart' OPTION
                 formatted_workbook = format_SAVEMART_DistroGrid(workbook)
 
             elif selected_option == 'SPROUTS': #ADD THIS CONDITION FOR 'SPROUTS' OPTION
@@ -409,13 +409,13 @@ for uploaded_file in uploaded_files:
     print("File Name Without Extension:", file_name_without_extension)
 
     # Use regular expression to extract the chain name from the file name
-    #chain_name_match = re.search(r"formatted_(\w+\s+\w+)_spreadsheet", file_name_without_extension)
+    #store_name_match = re.search(r"formatted_(\w+\s+\w+)_spreadsheet", file_name_without_extension)
 
-    chain_name_match = re.search(r"formatted_(\w+)_spreadsheet", file_name_without_extension)
+    store_name_match = re.search(r"formatted_(\w+)_spreadsheet", file_name_without_extension)
 
-    print("Extracted Chain Name:", chain_name_match)
-    if chain_name_match:
-        chain_name = chain_name_match.group(1)
+    print("Extracted Store Name:", store_name_match)
+    if store_name_match:
+        store_name = store_name_match.group(1)
         
     else:
         # If the chain name cannot be extracted, assume it's not formatted correctly
@@ -428,7 +428,7 @@ for uploaded_file in uploaded_files:
 
     # Print the selected_option and chain_name
     print(f"selected_option: {selected_option}")
-    print(f"chain_name: {chain_name}")        
+    print(f"store_name: {store_name}")        
 
    
 
@@ -449,7 +449,7 @@ for uploaded_file in uploaded_files:
             elif selected_option == "WHOLEFOODS":
                upload_WHOLEFOODS_distro_grid_to_snowflake(df, schema, table_name, selected_option)    
 
-            elif selected_option == "LUCKYS":
+            elif selected_option == "LUCKY":
                 upload_LUCKYS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
                 
             elif selected_option == "WALMART":
@@ -467,7 +467,7 @@ for uploaded_file in uploaded_files:
             elif selected_option == "TARGET":
                 upload_TARGET_distro_grid_to_snowflake(df, schema, table_name, selected_option)
             #
-            elif selected_option == "SAVEMART":
+            elif selected_option == "SAVE MART":
                 upload_SAVEMART_distro_grid_to_snowflake(df, schema, table_name, selected_option)
             # Add more if-else statements for other stores as needed
             else:

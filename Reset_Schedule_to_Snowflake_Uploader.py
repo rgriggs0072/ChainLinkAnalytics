@@ -324,6 +324,20 @@ def upload_reset_SCH_RALEYS_data(df, warehouse, database, schema):
 
     try: 
         
+
+        # Load Snowflake credentials from the secrets.toml file
+        snowflake_creds = st.secrets["snowflake"]
+
+        # Establish a new connection to Snowflake
+        conn = snowflake.connector.connect(
+            account=snowflake_creds["account"],
+            user=snowflake_creds["user"],
+            password=snowflake_creds["password"],
+            warehouse=snowflake_creds["warehouse"],
+            database=snowflake_creds["database"],
+            schema=snowflake_creds["schema"]
+        )
+        
         user_id = getpass.getuser()
         local_ip = get_local_ip()
 
@@ -422,7 +436,7 @@ def upload_reset_SCH_FOODMAXX_data(df, warehouse, database, schema):
         st.write(f"You selected: {selected_option}")
 
         # Log the start of the SQL activity
-        #description = "Started Safeway delete from reset table"
+        #description = "Started FOOD MAXX delete from reset table"
         description = f"Started {selected_option} delete from reset table"
 
         insert_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)

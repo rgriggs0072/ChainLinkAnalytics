@@ -421,7 +421,7 @@ with file_container:
                 # Write DataFrame to Snowflake based on the selected store
                 if selected_option == "SAFEWAY":
                     upload_reset_SCH_SAFEWAY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-                elif selected_option == "LUCKYS":
+                elif selected_option == "LUCKY":
                     upload_reset_SCH_LUCKY_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                 elif selected_option == "WALMART":
                     upload_reset_SCH_WALMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
@@ -429,7 +429,7 @@ with file_container:
                 elif selected_option == "RALEYS":
                     upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                     # Add more if-else statements for other stores as needed
-                elif selected_option == "FOOD MAXX":
+                elif selected_option == "FOODMAXX":
                     upload_reset_SCH_FOODMAXX_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                 elif selected_option == "SMART_FINAL":
                     upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")

@@ -5,7 +5,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 def format_LUCKYS_DistroGrid(workbook):
     # Assuming the sheet name is 'Sheet1', you can modify it as per your actual sheet name
-    sheet = workbook['Lucky Distro Grid']
+    sheet = workbook['Sheet1']
 
     # Read the data from the sheet into a DataFrame
     data = sheet.values
@@ -42,15 +42,15 @@ def format_LUCKYS_DistroGrid(workbook):
     df_melted = df_melted[["STORE_NAME", "STORE_NUMBER", "UPC"] + [col for col in df_melted.columns if col not in ["STORE_NAME", "STORE_NUMBER", "UPC"]]]
 
     # Delete columns F and G
-    df_melted = df_melted.drop(columns=["PTS of Distro", "% of Distro"])
+    df_melted = df_melted.drop(columns=["FM Dist %", "LKY Dist %", "SM Dist %", "TTL Dist %"])
 
 
     
-        # Define the list of desired columns
-    desired_columns = ["STORE_NAME", "STORE_NUMBER", "UPC", "SKU #", "Name", "Manufacturer", "SEGMENT", "Yes/No", "ACTIVATION_STATUS", "COUNTY", "CHAIN_NAME"]
+    #     # Define the list of desired columns
+    # desired_columns = ["STORE_NAME", "STORE_NUMBER", "UPC", "SKU #", "Name", "Manufacturer", "SEGMENT", "Yes/No", "ACTIVATION_STATUS", "COUNTY", "CHAIN_NAME"]
 
-    # Reindex the DataFrame with the desired columns
-    df_melted = df_melted.reindex(columns=desired_columns)
+    # # Reindex the DataFrame with the desired columns
+    # df_melted = df_melted.reindex(columns=desired_columns)
 
     # Rename the columns as per your requirements
     df_melted.rename(columns={
@@ -67,7 +67,15 @@ def format_LUCKYS_DistroGrid(workbook):
     df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1'}, regex=True)
 
     # Fill CHAIN_NAME column with "SAVE MART" starting from row 2
-    df_melted.loc[0:, "CHAIN_NAME"] = "LUCKYS"
+    df_melted.loc[0:, "CHAIN_NAME"] = "LUCKY"
+    
+# Fill STORE_NAME column with "FOOD MAXX" starting from row 2
+    df_melted.loc[0:, "STORE_NAME"] = "LUCKY"
+
+    # Fill SKU column with 0 starting from row 2
+    df_melted.loc[0:, "SKU"] = 0
+
+   
 
 
 
