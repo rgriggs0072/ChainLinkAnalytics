@@ -22,7 +22,7 @@ table.dataframe.table.table-striped
 /* This styles the Execution Summary data in row 1 column2 on the home page*/
 
 /*div.st-emotion-cache-1bzkvni.e1f1d6gn1*/
-.data-testid="column".css-1bzkvni.esravye1
+[data-testid="column"] > css-1bzkvni.esravye1
 /*div.css-j5r0tf.esravye1 */
 [data.testid="column"{
     /*background-color: #FFFFFF;*/
