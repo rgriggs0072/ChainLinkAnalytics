@@ -132,11 +132,11 @@ def display_execution_summary():
 #-------------------------------------------------------------------------------------------------------------------------------------------
 
 #===========================================================================================================================================
-# Block for Function that will connect to DB and pull data to display the the bar chart from view - Execution Summary  - Data in column 3
+# Calls snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
 #===========================================================================================================================================
 
-# Function to fetch data for the bar chart
-def fetch_chain_schematic_data():
+# Function to call the PROCEDURE
+def call_process_execution_summary():
     # Load Snowflake credentials from the secrets.toml file
     snowflake_creds = st.secrets["snowflake"]
 
@@ -150,15 +150,62 @@ def fetch_chain_schematic_data():
         schema=snowflake_creds["schema"]
     )    
 
+    # Execute the PROCEDURE
+    cursor = conn.cursor()
+    cursor.execute("CALL PROCESS_EXECUTION_SUMMARY();")
+
+    # Commit the changes
+    conn.commit()
+
+    # Close the connection
+    conn.close()
+#===========================================================================================================================================
+# END Call snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
+#===========================================================================================================================================    
+
+#-------------------------------------------------------------------------------------------------------------------------------------------
+
+#===========================================================================================================================================
+# Block for Function that will connect to DB and pull data to display the the bar chart from view - Execution Summary  - Data in column 3
+#===========================================================================================================================================
+
+# Function to fetch data for the bar chart
+def fetch_chain_schematic_data():
+    # Load Snowflake credentials from the secrets.toml file
+
+    # Call the PROCEDURE to process the data
+    call_process_execution_summary()
+    snowflake_creds = st.secrets["snowflake"]
+
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )    
+
     # Fetch data for the bar chart (modify the query to match your view)
-    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.EXECUTION_SUMMARY GROUP BY CHAIN_NAME;"
+    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM datasets.datasets.EXECUTION_SUMMARY GROUP BY CHAIN_NAME;"
     df = pd.read_sql(query, conn)
-    df = pd.read_sql(query, conn)
+    #st.write(df)
+
+    # Ensure 'PURCHASED_PERCENTAGE' is treated as a numeric (float) type
+    df['PURCHASED_PERCENTAGE'] = df['PURCHASED_PERCENTAGE'].astype(float)
+
+    # Perform rounding
+    df['PURCHASED_PERCENTAGE'] = (df['PURCHASED_PERCENTAGE'] * 100).round(2).astype(str) + '%'
     #st.write(df)
     # Close the connection
     conn.close()
-    
+
     return df
+
+# Rest of your code (main block) remains the same as before
+
+
 
 
 #===========================================================================================================================================
@@ -170,19 +217,14 @@ def fetch_chain_schematic_data():
 #===============================================================================================================================================
 # Call function fetch_chain_schematic_data() to get data for bar chart and display it in column 3 
 #===============================================================================================================================================
-# Fetch chain schematic data
+ #Fetch chain schematic data
 chain_schematic_data = fetch_chain_schematic_data()
-#st.write(chain_schematic_data)
 
 # Clean and convert the Purchased_Percentage column to numeric
-chain_schematic_data['PURCHASED_PERCENTAGE'] = chain_schematic_data['PURCHASED_PERCENTAGE'].astype(str)
-chain_schematic_data['PURCHASED_PERCENTAGE'] = chain_schematic_data['PURCHASED_PERCENTAGE'].str.replace('%', '').astype(float)
+#chain_schematic_data['PURCHASED_PERCENTAGE'] = chain_schematic_data['PURCHASED_PERCENTAGE'] * 100
 
-
-# Calculate summary statistics
-total_in_schematic = chain_schematic_data['TOTAL_IN_SCHEMATIC'].sum()
-total_purchased = chain_schematic_data['PURCHASED'].sum()
-average_percentage = chain_schematic_data['PURCHASED_PERCENTAGE'].mean()
+# Round the PURCHASED_PERCENTAGE column to two decimal places
+#chain_schematic_data['PURCHASED_PERCENTAGE'] = chain_schematic_data['PURCHASED_PERCENTAGE'].round(2)
 
 # Create a bar chart using Altair with percentage labels on bars
 bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
@@ -191,19 +233,21 @@ bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
     color=alt.Color('PURCHASED_PERCENTAGE', scale=alt.Scale(scheme='viridis')),
     tooltip=['CHAIN_NAME', 'TOTAL_IN_SCHEMATIC', 'PURCHASED', 'PURCHASED_PERCENTAGE']
 ).properties(
-    width=800,  # Adjust the width as needed
-    height=400,  # Adjust the height as needed
+    width=800,
+    height=400,
 ).configure_title(
     align='center',
-    fontSize=16  # Adjust the font size as needed
+    fontSize=16
 ).encode(
-    text=alt.Text('PURCHASED_PERCENTAGE:Q', format='.2f')  # Format the percentage label
+    text=alt.Text('PURCHASED_PERCENTAGE:Q', format='.2f')
 ).configure_mark(
-    fontSize=14  # Adjust the font size of the percentage label
+    fontSize=14
 )
 
 # Display the bar chart in the third column
 col3.altair_chart(bar_chart, use_container_width=False)
+
+
 
 #===============================================================================================================================================
 # Call function fetch_chain_schematic_data() to get data for bar chart and display it in column 3 
