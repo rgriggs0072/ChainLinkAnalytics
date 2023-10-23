@@ -171,7 +171,15 @@ def fetch_schematic_summary_data():
     cursor = conn.cursor()
     cursor.execute(sql_query)
     results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Purchased", "Purchased_Percentage"])
+    df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Purchased", "PURCHASED_PERCENTAGE", "SUPPLIER"])
+    st.write(df)
+    # Ensure 'PURCHASED_PERCENTAGE' is treated as a numeric (float) type
+    df['PURCHASED_PERCENTAGE'] = df['PURCHASED_PERCENTAGE'].astype(float)
+
+    # Perform rounding and formatting
+    df['PURCHASED_PERCENTAGE'] = (df['PURCHASED_PERCENTAGE']).apply(lambda x: f"{x:.2f}%")
+
+    st.write(df)
 
     # Close the cursor and connection
     cursor.close()
@@ -190,11 +198,11 @@ if st.button("Fetch Schematic Summary Data"):
      df = fetch_schematic_summary_data()
 
 # Download button for the Excel file
-    excel_file_path = "schematic_summary.xlsx"
+    excel_file_path = "SCHEMATIC_SUMMARY_DATA.xlsx"
     df.to_excel(excel_file_path, index=False)
 
     st.download_button(
-        label="Download Schematic Summary",
+        label="Download Schematic Summary Data",
         data=open(excel_file_path, "rb").read(),
         file_name=excel_file_path,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
