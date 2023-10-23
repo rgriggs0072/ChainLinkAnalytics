@@ -172,14 +172,14 @@ def fetch_schematic_summary_data():
     cursor.execute(sql_query)
     results = cursor.fetchall()
     df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Purchased", "PURCHASED_PERCENTAGE", "SUPPLIER"])
-    st.write(df)
+    #st.write(df)
     # Ensure 'PURCHASED_PERCENTAGE' is treated as a numeric (float) type
     df['PURCHASED_PERCENTAGE'] = df['PURCHASED_PERCENTAGE'].astype(float)
 
     # Perform rounding and formatting
     df['PURCHASED_PERCENTAGE'] = (df['PURCHASED_PERCENTAGE']).apply(lambda x: f"{x:.2f}%")
 
-    st.write(df)
+    #st.write(df)
 
     # Close the cursor and connection
     cursor.close()
