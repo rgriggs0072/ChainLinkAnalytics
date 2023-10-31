@@ -220,7 +220,7 @@ def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
     cursor = conn.cursor()
     sql_query = f"CREATE OR REPLACE TABLE {table_name} AS SELECT \
     CAST(STORE_NUMBER AS NUMBER) AS STORE_NUMBER, \
-    CAST(STORE_NAME AS VARCHAR) AS STORE_NAME, \
+    CAST(TRIM(STORE_NAME) AS VARCHAR) AS STORE_NAME, \
     CAST(ADDRESS AS VARCHAR) AS ADDRESS, \
     CAST(SALESPERSON AS VARCHAR) AS SALESPERSON, \
     CAST(PRODUCT_NAME AS VARCHAR) AS PRODUCT_NAME, \
@@ -262,7 +262,7 @@ if uploaded_file:
     # write DataFrame to Snowflake on button click
     if st.button("Import into Snowflake"):
         with st.spinner('Uploading data to Snowflake ...'):
-            write_salesreport_to_snowflake(df, "COMPUTE_WH", "datasets", "DATASETS", st.session_state.table_name)
+            write_salesreport_to_snowflake(df, "COMPUTE_WH", "DATASETS", "DATASETS", st.session_state.table_name)
 
 #=====================================================================================================
 # END Create uploader for formatted sales report create dataframe and call write to snowflake function
