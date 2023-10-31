@@ -67,11 +67,12 @@ def format_SMART_FINAL_DistroGrid(workbook):
     df_melted_filtered = df_melted.dropna(subset=["MANUFACTURER"])
     
 
-    #st.write(df_melted)
+    st.write(df_melted)
 
     # Replace 1 with a green checkmark and NaN with a red X
     df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if x == 1 else ('No' if pd.isna(x) else '*'))
 
+    st.write(df_melted)
     
 
     # Move store_id column to the second position and rename it as STORE_NUMBER
@@ -117,7 +118,7 @@ def format_SMART_FINAL_DistroGrid(workbook):
     
 
     # Remove ' and , characters from all columns
-    df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1', 'No': ''}, regex=True)
+    df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1', 'No': '0'}, regex=True)
 
     # Fill CHAIN_NAME column with "SMARTFINAL" starting from row 2
     df_melted.loc[0:, "CHAIN_NAME"] = "SMART & FINAL"
