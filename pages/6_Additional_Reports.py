@@ -64,8 +64,9 @@ st.markdown("<hr>", unsafe_allow_html=True)
 
 # Load Product Data function to the product table within snowflake
 #======================================================================================================================================
+# Load Product Data function to the product table within Snowflake
 def fetch_product_analysis_data():
-# Load Snowflake credentials from the secrets.toml file
+    # Load Snowflake credentials from the secrets.toml file
     snowflake_creds = st.secrets["snowflake"]
 
     # Establish a new connection to Snowflake
@@ -87,7 +88,7 @@ def fetch_product_analysis_data():
         UPC,
         _COUNT AS ProductCount
     FROM
-        DATASETS.DATASETS.PRODUCT_ANALYSIS;
+        PRODUCT_ANALYSIS;  -- Remove database and schema here
     """
     cursor = conn.cursor()
     cursor.execute(sql_query)
@@ -95,14 +96,13 @@ def fetch_product_analysis_data():
     df = pd.DataFrame(results, columns=["Store", "Product", "Salesperson", "UPC", "ProductCount"])
     df['Salesperson'].fillna('Unknown', inplace=True)
 
-    st.write(df)
+    #st.write(df)
 
     # Close the cursor and connection
     cursor.close()
     conn.close()
 
     return df
-
 #===================================================================================================================================
 
 # Button to call the product analysis data function above
@@ -116,7 +116,6 @@ if st.button("Fetch Product Analysis Pivot Data"):
 
 #====================================================================================================================================
 #Create the excel pivot table and provide download button    
-     # Pivot table creation
      # Pivot table creation
      pivot_table = pd.pivot_table(df, values="ProductCount", index=["UPC", "Product","Salesperson" ], columns="Store", fill_value=0)
 
@@ -166,16 +165,29 @@ def fetch_schematic_summary_data():
 
     # Execute the SQL query against the schematic_summary view and fetch the results into a DataFrame
     sql_query = """
-    Select * from  schematic_summary
+    SELECT 
+    "dg_upc" AS UPC,
+    PRODUCT_NAME,
+    SUM("In_Schematic") AS Total_In_Schematic,
+    SUM(PURCHASED_YES_NO) AS Total_Purchased,
+    (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage,
+    SUPPLIER 
+FROM
+    GAP_REPORT_TMP2
+    where "sc_STATUS" = 'Yes'
+    group by supplier, "dg_upc", product_name
+    order by supplier;
     """
     cursor = conn.cursor()
     cursor.execute(sql_query)
     results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Purchased", "PURCHASED_PERCENTAGE", "SUPPLIER"])
+    df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Total_Purchased", "PURCHASED_PERCENTAGE", "SUPPLIER"])
     #st.write(df)
     # Ensure 'PURCHASED_PERCENTAGE' is treated as a numeric (float) type
     df['PURCHASED_PERCENTAGE'] = df['PURCHASED_PERCENTAGE'].astype(float)
-
+    # Remove rows with NaN values in 'PURCHASED_PERCENTAGE'
+    df['Total_Purchased'].fillna(0, inplace=True)
+    df['PURCHASED_PERCENTAGE'].fillna(0, inplace=True)
     # Perform rounding and formatting
     df['PURCHASED_PERCENTAGE'] = (df['PURCHASED_PERCENTAGE']).apply(lambda x: f"{x:.2f}%")
 
