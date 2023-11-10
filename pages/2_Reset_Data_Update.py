@@ -213,7 +213,7 @@ with file_container:
             elif selected_option == 'WALMART': #ADD THIS CONDITION FOR 'WALMART' OPTION
                 formatted_workbook = format_WALMART_schedule(workbook)
             # Call the format_FOODMAXX_Schedule function for 'FoodMaxx' option
-            elif selected_option == 'FOOD MAXX': #ADD THIS CONDITION FOR 'WALMART' OPTION
+            elif selected_option == 'FOOD MAXX': #ADD THIS CONDITION FOR 'FOODMAXX' OPTION
                 formatted_workbook = format_FOODMAXX_schedule(workbook)
             # Call the format_LUCKYS_Schedule function for 'Luckys' option
             elif selected_option == 'LUCKYS': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
@@ -429,7 +429,7 @@ with file_container:
                 elif selected_option == "RALEYS":
                     upload_reset_SCH_RALEYS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                     # Add more if-else statements for other stores as needed
-                elif selected_option == "FOODMAXX":
+                elif selected_option == "FOOD MAXX":
                     upload_reset_SCH_FOODMAXX_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                 elif selected_option == "SMART_FINAL":
                     upload_reset_SCH_SMART_FINAL_data(df, "COMPUTE_WH", "datasets", "DATASETS")
@@ -439,7 +439,7 @@ with file_container:
                     upload_reset_SCH_TARGET_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                 elif selected_option == "WHOLEFOODS":
                     upload_reset_SCH_WHOLEFOODS_data(df, "COMPUTE_WH", "datasets", "DATASETS")
-                elif selected_option == "SAVEMART":
+                elif selected_option == "SAVE MART":
                     upload_reset_SCH_SAVEMART_data(df, "COMPUTE_WH", "datasets", "DATASETS")
                     # Add more if-else statements for other stores as needed
                 else:

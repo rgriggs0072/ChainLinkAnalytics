@@ -167,11 +167,12 @@ def fetch_schematic_summary_data():
     sql_query = """
     SELECT 
     "dg_upc" AS UPC,
+    SUPPLIER,
     PRODUCT_NAME,
     SUM("In_Schematic") AS Total_In_Schematic,
     SUM(PURCHASED_YES_NO) AS Total_Purchased,
-    (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage,
-    SUPPLIER 
+    (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage
+     
 FROM
     GAP_REPORT_TMP2
     where "sc_STATUS" = 'Yes'
@@ -181,7 +182,7 @@ FROM
     cursor = conn.cursor()
     cursor.execute(sql_query)
     results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=["UPC", "PRODUCT_NAME", "Total_In_Schematic", "Total_Purchased", "PURCHASED_PERCENTAGE", "SUPPLIER"])
+    df = pd.DataFrame(results, columns=["UPC", "SUPPLIER", "PRODUCT_NAME", "Total_In_Schematic", "Total_Purchased", "PURCHASED_PERCENTAGE"])
     #st.write(df)
     # Ensure 'PURCHASED_PERCENTAGE' is treated as a numeric (float) type
     df['PURCHASED_PERCENTAGE'] = df['PURCHASED_PERCENTAGE'].astype(float)
