@@ -50,7 +50,7 @@ st.sidebar.image(my_logo)
 st.sidebar.subheader("Delta Pacific Beverage Co.")
 
 # Set Page Header
-st.header("Delta Pacific Beverage Chain Dashboard")
+st.header("Development Environment - Delta Pacific Beverage Chain Dashboard")
 # Set custom CSS for hr element
 st.markdown(
     """
@@ -137,30 +137,41 @@ def display_execution_summary():
 # Calls snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
 #===========================================================================================================================================
 
-# Function to call the PROCEDURE
 def call_process_execution_summary():
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
+    try:
+        # Load Snowflake credentials from the secrets.toml file
+        snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )    
+        # Establish a new connection to Snowflake
+        conn = snowflake.connector.connect(
+            account=snowflake_creds["account"],
+            user=snowflake_creds["user"],
+            password=snowflake_creds["password"],
+            warehouse=snowflake_creds["warehouse"],
+            database=snowflake_creds["database"],
+            schema=snowflake_creds["schema"]
+        )    
 
-    # Execute the PROCEDURE
-    cursor = conn.cursor()
-    cursor.execute("CALL PROCESS_EXECUTION_SUMMARY();")
+        # Execute the PROCEDURE
+        cursor = conn.cursor()
+        cursor.execute("CALL PROCESS_EXECUTION_SUMMARY();")
 
-    # Commit the changes
-    conn.commit()
+        # Commit the changes
+        conn.commit()
 
-    # Close the connection
-    conn.close()
+    except Exception as e:
+        print(f"Error: {e}")
+    
+    finally:
+        # Close the cursor and the connection in the finally block
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+# Call the function
+call_process_execution_summary()
+
 #===========================================================================================================================================
 # END Call snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
 #===========================================================================================================================================    
@@ -190,7 +201,7 @@ def fetch_chain_schematic_data():
     )    
 
     # Fetch data for the bar chart (modify the query to match your view)
-    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM DATASETS.DATASETS.EXECUTION_SUMMARY GROUP BY CHAIN_NAME;"
+    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.EXECUTION_SUMMARY GROUP BY CHAIN_NAME;"
     df = pd.read_sql(query, conn)
     #st.write(df)
 
@@ -222,11 +233,6 @@ def fetch_chain_schematic_data():
  #Fetch chain schematic data
 chain_schematic_data = fetch_chain_schematic_data()
 
-# Clean and convert the Purchased_Percentage column to numeric
-#chain_schematic_data['PURCHASED_PERCENTAGE'] = chain_schematic_data['PURCHASED_PERCENTAGE'] * 100
-
-# Round the PURCHASED_PERCENTAGE column to two decimal places
-#chain_schematic_data['PURCHASED_PERCENTAGE'] = chain_schematic_data['PURCHASED_PERCENTAGE'].round(2)
 
 # Create a bar chart using Altair with percentage labels on bars
 bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
@@ -276,7 +282,7 @@ conn = snowflake.connector.connect(
 
 # Execute the SQL query to retrieve the salesperson's store count
 query = pd.read_sql_query('''
-                          SELECT SALESPERSON, TOTAL_STORES FROM DATASETS.DATASETS.SALESPERSON_STORE_COUNT
+                          SELECT SALESPERSON, TOTAL_STORES FROM CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.SALESPERSON_STORE_COUNT
                           ''',conn)
 
 # cursor.close()
@@ -343,6 +349,19 @@ with col2:
 #===============================================================================================================================================
 # Fetch supplier names from the supplier_county table
 def fetch_supplier_names():
+    
+# Load Snowflake credentials from the secrets.toml file
+    snowflake_creds = st.secrets["snowflake"]
+    
+    # Establish a new connection to Snowflake
+    conn = snowflake.connector.connect(
+        account=snowflake_creds["account"],
+        user=snowflake_creds["user"],
+        password=snowflake_creds["password"],
+        warehouse=snowflake_creds["warehouse"],
+        database=snowflake_creds["database"],
+        schema=snowflake_creds["schema"]
+    )
     query = "SELECT DISTINCT supplier FROM supplier_county order by supplier"
     cursor = conn.cursor()
     cursor.execute(query)
@@ -387,7 +406,7 @@ def fetch_supplier_schematic_barchart_data(selected_suppliers):
     SUM(PURCHASED_YES_NO) AS Total_Purchased,
     (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage
 FROM
-    DATASETS.DATASETS.GAP_REPORT_TMP2
+    CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.GAP_REPORT_TMP2
 WHERE
     "sc_STATUS" = 'Yes' AND supplier IN ({supplier_conditions})
 GROUP BY
@@ -443,7 +462,7 @@ def fetch_supplier_schematic_summary_data(selected_suppliers):
     SUM(PURCHASED_YES_NO) AS Total_Purchased,
     (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage
 FROM
-    DATASETS.DATASETS.GAP_REPORT_TMP2
+    CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.GAP_REPORT_TMP2
 WHERE
     "sc_STATUS" = 'Yes' AND SUPPLIER IN ({supplier_conditions})
 GROUP BY
@@ -460,11 +479,7 @@ GROUP BY
     cursor.close()
     conn.close()
    
-    # Format the Purchased Percentage column as percentage with two decimal places
-   # df["Purchased_Percentage"] = df["Purchased_Percentage"].apply(lambda x: f"{float(x):.2f}")
-    # st.write(df)
-    # data_types = df.dtypes
-    # st.write(data_types)
+   
         
     return df
 
