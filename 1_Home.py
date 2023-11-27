@@ -368,6 +368,7 @@ def fetch_supplier_names():
     results = cursor.fetchall()
     supplier_names = [row[0] for row in results]
     cursor.close()
+    conn.close()
     return supplier_names
 
 #===============================================================================================================================================
