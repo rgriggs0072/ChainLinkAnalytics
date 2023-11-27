@@ -169,8 +169,13 @@ def call_process_execution_summary():
         if conn:
             conn.close()
 
-# Call the function
-call_process_execution_summary()
+# Check if the app is in the initial state
+if 'init_flag' not in st.session_state:
+    # Set the initialization flag
+    st.session_state.init_flag = True
+    
+    # Call the Snowflake procedure during app initialization
+    call_process_execution_summary()
 
 #===========================================================================================================================================
 # END Call snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
