@@ -137,45 +137,45 @@ def display_execution_summary():
 # Calls snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
 #===========================================================================================================================================
 
-def call_process_execution_summary():
-    try:
-        # Load Snowflake credentials from the secrets.toml file
-        snowflake_creds = st.secrets["snowflake"]
+# def call_process_execution_summary():
+#     try:
+#         # Load Snowflake credentials from the secrets.toml file
+#         snowflake_creds = st.secrets["snowflake"]
 
-        # Establish a new connection to Snowflake
-        conn = snowflake.connector.connect(
-            account=snowflake_creds["account"],
-            user=snowflake_creds["user"],
-            password=snowflake_creds["password"],
-            warehouse=snowflake_creds["warehouse"],
-            database=snowflake_creds["database"],
-            schema=snowflake_creds["schema"]
-        )    
+#         # Establish a new connection to Snowflake
+#         conn = snowflake.connector.connect(
+#             account=snowflake_creds["account"],
+#             user=snowflake_creds["user"],
+#             password=snowflake_creds["password"],
+#             warehouse=snowflake_creds["warehouse"],
+#             database=snowflake_creds["database"],
+#             schema=snowflake_creds["schema"]
+#         )    
 
-        # Execute the PROCEDURE
-        cursor = conn.cursor()
-        cursor.execute("CALL PROCESS_EXECUTION_SUMMARY();")
+#         # Execute the PROCEDURE
+#         cursor = conn.cursor()
+#         cursor.execute("CALL PROCESS_EXECUTION_SUMMARY();")
 
-        # Commit the changes
-        conn.commit()
+#         # Commit the changes
+#         conn.commit()
 
-    except Exception as e:
-        print(f"Error: {e}")
+#     except Exception as e:
+#         print(f"Error: {e}")
     
-    finally:
-        # Close the cursor and the connection in the finally block
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+#     finally:
+#         # Close the cursor and the connection in the finally block
+#         if cursor:
+#             cursor.close()
+#         if conn:
+#             conn.close()
 
-# Check if the app is in the initial state
-if 'init_flag' not in st.session_state:
-    # Set the initialization flag
-    st.session_state.init_flag = True
+# # Check if the app is in the initial state
+# if 'init_flag' not in st.session_state:
+#     # Set the initialization flag
+#     st.session_state.init_flag = True
     
-    # Call the Snowflake procedure during app initialization
-    call_process_execution_summary()
+#     # Call the Snowflake procedure during app initialization
+#     call_process_execution_summary()
 
 #===========================================================================================================================================
 # END Call snowflake procedure to build the execution summary table before the data is pulled to build the chain execution summary chart
