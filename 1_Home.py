@@ -204,7 +204,7 @@ def fetch_chain_schematic_data():
     )    
 
     # Fetch data for the bar chart (modify the query to match your view)
-    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.EXECUTION_SUMMARY GROUP BY CHAIN_NAME;"
+    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM DATASETS.DATASETS.EXECUTION_SUMMARY GROUP BY CHAIN_NAME;"
     df = pd.read_sql(query, conn)
     #st.write(df)
 
@@ -285,7 +285,7 @@ conn = snowflake.connector.connect(
 
 # Execute the SQL query to retrieve the salesperson's store count
 query = pd.read_sql_query('''
-                          SELECT SALESPERSON, TOTAL_STORES FROM CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.SALESPERSON_STORE_COUNT
+                          SELECT SALESPERSON, TOTAL_STORES FROM DATASETS.DATASETS.SALESPERSON_STORE_COUNT
                           ''',conn)
 
 # cursor.close()
@@ -410,7 +410,7 @@ def fetch_supplier_schematic_barchart_data(selected_suppliers):
     SUM(PURCHASED_YES_NO) AS Total_Purchased,
     (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage
 FROM
-    CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.GAP_REPORT_TMP2
+    DATASETS.DATASETS.GAP_REPORT_TMP2
 WHERE
     "sc_STATUS" = 'Yes' AND supplier IN ({supplier_conditions})
 GROUP BY
@@ -466,7 +466,7 @@ def fetch_supplier_schematic_summary_data(selected_suppliers):
     SUM(PURCHASED_YES_NO) AS Total_Purchased,
     (SUM(PURCHASED_YES_NO) / SUM("In_Schematic")) * 100 AS Purchased_Percentage
 FROM
-    CHAINLINK_DEVELOPMENT.CHAINLINK_DEV.GAP_REPORT_TMP2
+    DATASETS.DATASETS.GAP_REPORT_TMP2
 WHERE
     "sc_STATUS" = 'Yes' AND SUPPLIER IN ({supplier_conditions})
 GROUP BY
