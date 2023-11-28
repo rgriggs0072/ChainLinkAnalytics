@@ -191,8 +191,6 @@ if 'init_flag' not in st.session_state:
 def fetch_chain_schematic_data():
     # Load Snowflake credentials from the secrets.toml file
 
-    # Call the PROCEDURE to process the data
-    call_process_execution_summary()
     snowflake_creds = st.secrets["snowflake"]
 
     # Establish a new connection to Snowflake
