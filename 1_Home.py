@@ -14,6 +14,8 @@ import streamlit.components.v1 as components
 from datetime import datetime
 import logging
 import uuid
+from io import BytesIO
+
 
 # Configure the logger
 logging.basicConfig(level=logging.INFO)
@@ -88,7 +90,7 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # ===========================================================================================================================================
 
 # Create a layout with two columns
-col1, col2, col3 = st.columns([20, 30, 50], gap="small")
+col1, col2, col3 = st.columns([30, 20, 40], gap="small")
 
 
 # ============================================================================================================================================================
@@ -120,9 +122,6 @@ def create_snowflake_connection():
             schema=snowflake_creds["schema"]
         )
 
-        # Log the query event
-        log_connection_info(connection_id)
-        # st.write(conn, connection_id)
         return conn, connection_id
 
     except snowflake.connector.errors.Error as e:
@@ -142,23 +141,23 @@ def create_snowflake_connection():
 # 12/04/2023 Randy Griggs added connection logging information which gets written to the connection_log table in snowflake
 # ============================================================================================================================================================
 
+# Log connection information to the CONNECTION_LOG table
 def log_connection_info(connection_id):
     try:
-        # Log connection information to the CONNECTION_LOG table
-        conn, connection_id = create_snowflake_connection()[0]  # Get connection object
+        conn = create_snowflake_connection()[0]  # Get connection object
         cursor = conn.cursor()
 
         # Log the connection event
         event_time = datetime.now()
         event_type = "Connection"
         username = st.secrets["snowflake"]["user"]
-        query_text = f"Connection ID: {connection_id}"
+        query_text = "Snowflake Connection"
 
         cursor.execute("""
             INSERT INTO CONNECTION_LOG 
             (EVENT_TIME, EVENT_TYPE, CONNECTION_ID, USERNAME, QUERY_TEXT)
             VALUES (%s, %s, %s, %s, %s)
-        """, (event_time, event_type, connection_id, username, query_text))
+        """, (event_time, event_type, connection_id, username, query_text ))
 
         conn.commit()
         conn.close()
@@ -191,7 +190,10 @@ def log_query_info(query, connection_id, conn):
             VALUES (%s, %s, %s, %s, %s)
         """, (event_time, event_type, connection_id, username, query_text))
 
+        
+
         conn.commit()
+        log_connection_info(connection_id)
 
         cursor.close()
 
@@ -488,11 +490,11 @@ GROUP BY
 # -----------------------------------------------------------------------------------------------------------------------------------------------
 
 # ===============================================================================================================================================
-# This block will call salesperson data from table and display the salesperson and number of stores they susport in column 1
+# This block will call salesperson data from view and display the salesperson, total_distribution, total_gaps, and Execution_percentage
 # ===============================================================================================================================================
 
 # Execute the SQL query to retrieve the salesperson's store count
-query = "SELECT SALESPERSON, TOTAL_STORES FROM SALESPERSON_STORE_COUNT"
+query = "SELECT SALESPERSON, TOTAL_DISTRIBUTION, TOTAL_GAPS, EXECUTION_PERCENTAGE FROM SALESPERSON_EXECUTION_SUMMARY"
 
 # Create a connection
 conn, connection_id = create_snowflake_connection()
@@ -506,11 +508,21 @@ result = execute_query_and_close_connection(query, conn, connection_id)
 # # Print connection status
 # print(f"Connection Status: FALSE = Open and TRUE = Closed: {conn.is_closed()}")
 
+
 # Create a DataFrame from the query results
-salesperson_df = pd.DataFrame(result, columns=['SALESPERSON', 'TOTAL_STORES'])
+salesperson_df = pd.DataFrame(result,
+                              columns=['SALESPERSON', 'TOTAL_DISTRIBUTION', 'TOTAL_GAPS', 'EXECUTION_PERCENTAGE'])
+
+# Convert the 'EXECUTION_PERCENTAGE' column to float before rounding
+salesperson_df['EXECUTION_PERCENTAGE'] = salesperson_df['EXECUTION_PERCENTAGE'].astype(float)
+
+# Round the 'EXECUTION_PERCENTAGE' column to 2 decimal places
+salesperson_df['EXECUTION_PERCENTAGE'] = salesperson_df['EXECUTION_PERCENTAGE'].round(2)
 
 # Rename the columns
-salesperson_df = salesperson_df.rename(columns={'SALESPERSON': 'Salesperson', 'TOTAL_STORES': 'Stores'})
+salesperson_df = salesperson_df.rename(
+    columns={'SALESPERSON': 'Salesperson', 'TOTAL_DISTRIBUTION': 'Total Distirbution', 'TOTAL_GAPS': 'Total Gaps',
+             'EXECUTION_PERCENTAGE': 'Execution Percentage'})
 
 # Limit the number of displayed rows to 6
 limited_salesperson_df = salesperson_df.head(100)
@@ -525,16 +537,22 @@ table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #E
 table_html = limited_salesperson_df.to_html(classes=["table", "table-striped"], escape=False, index=False)
 
 # Add style to the table tag to allow automatic column width adjustment
-table_with_scroll = f"<div style='{table_style}'><table style='table-layout: auto;'><colgroup><col style='width: 60%;'><col style='width: 30%;'></colgroup>{table_html}</table></div>"
+table_with_scroll = f"<div style='{table_style}'><table style='table-layout: auto;'><colgroup><col style='width: 60%;'><col style='width: 30%;'><col style='width: 30%;'></colgroup>{table_html}</table></div>"
 
 # Display the table in col1 with custom formatting
 with col1:
     # Display the table with custom formatting
     st.markdown(table_with_scroll, unsafe_allow_html=True)
+    # Add a download link for the Excel file
+    excel_data = BytesIO()
+    salesperson_df.to_excel(excel_data, index=False)
+    excel_data.seek(0)
+    st.download_button(label="Download Excel", data=excel_data, file_name="salesperson_execution_summary.xlsx",
+                       key='download_button')
 
 # ===============================================================================================================================================
-# End  block will call salesperson data from table and display the salesperson and number of stores they susport in column 1
-# ===============================================================================================================================================
+# End  This block will call salesperson data from view and display the salesperson, total_distribution, total_gaps, and Execution_percentage
+# ========================================================================================================================================================
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------
 
