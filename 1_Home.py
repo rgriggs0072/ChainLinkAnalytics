@@ -494,7 +494,7 @@ GROUP BY
 # ===============================================================================================================================================
 
 # Execute the SQL query to retrieve the salesperson's store count
-query = "SELECT SALESPERSON, TOTAL_DISTRIBUTION, TOTAL_GAPS, EXECUTION_PERCENTAGE FROM SALESPERSON_EXECUTION_SUMMARY"
+query = "SELECT SALESPERSON, TOTAL_DISTRIBUTION, TOTAL_GAPS, EXECUTION_PERCENTAGE FROM SALESPERSON_EXECUTION_SUMMARY order by TOTAL_DISTRIBUTION DESC"
 
 # Create a connection
 conn, connection_id = create_snowflake_connection()
@@ -521,7 +521,7 @@ salesperson_df['EXECUTION_PERCENTAGE'] = salesperson_df['EXECUTION_PERCENTAGE'].
 
 # Rename the columns
 salesperson_df = salesperson_df.rename(
-    columns={'SALESPERSON': 'Salesperson', 'TOTAL_DISTRIBUTION': 'Total Distirbution', 'TOTAL_GAPS': 'Total Gaps',
+    columns={'SALESPERSON': 'Salesperson', 'TOTAL_DISTRIBUTION': 'Total Distibution', 'TOTAL_GAPS': 'Total Gaps',
              'EXECUTION_PERCENTAGE': 'Execution Percentage'})
 
 # Limit the number of displayed rows to 6
