@@ -3,6 +3,7 @@ from re import S
 import streamlit as st
 import snowflake.connector
 import pandas as pd
+from pandas import Series, DataFrame
 from PIL import Image
 import plotly.express as px
 import numpy as np
@@ -12,9 +13,17 @@ import altair as alt
 import decimal
 import streamlit.components.v1 as components
 from datetime import datetime
+
 import logging
 import uuid
 from io import BytesIO
+
+from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
+
+
+# UPDATE
+# Randy Griggs - 12/19/2023
+
 
 
 # Configure the logger
@@ -89,8 +98,8 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # Create three columns to display  Salesperson Store count in column 1,  execution summary in column two and chain barchart in column three
 # ===========================================================================================================================================
 
-# Create a layout with two columns
-col1, col2, col3 = st.columns([30, 20, 40], gap="small")
+# Create a layout with three columns
+col1, col2 = st.columns([50, 50], gap="medium")
 
 
 # ============================================================================================================================================================
@@ -141,29 +150,29 @@ def create_snowflake_connection():
 # 12/04/2023 Randy Griggs added connection logging information which gets written to the connection_log table in snowflake
 # ============================================================================================================================================================
 
-# Log connection information to the CONNECTION_LOG table
-def log_connection_info(connection_id):
-    try:
-        conn = create_snowflake_connection()[0]  # Get connection object
-        cursor = conn.cursor()
+# # Log connection information to the CONNECTION_LOG table
+# def log_connection_info(connection_id):
+#     try:
+#         conn = create_snowflake_connection()[0]  # Get connection object
+#         cursor = conn.cursor()
 
-        # Log the connection event
-        event_time = datetime.now()
-        event_type = "Connection"
-        username = st.secrets["snowflake"]["user"]
-        query_text = "Snowflake Connection"
+#         # Log the connection event
+#         event_time = datetime.now()
+#         event_type = "Connection"
+#         username = st.secrets["snowflake"]["user"]
+#         query_text = "Snowflake Connection"
 
-        cursor.execute("""
-            INSERT INTO CONNECTION_LOG 
-            (EVENT_TIME, EVENT_TYPE, CONNECTION_ID, USERNAME, QUERY_TEXT)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (event_time, event_type, connection_id, username, query_text ))
+#         cursor.execute("""
+#             INSERT INTO CONNECTION_LOG
+#             (EVENT_TIME, EVENT_TYPE, CONNECTION_ID, USERNAME, QUERY_TEXT)
+#             VALUES (%s, %s, %s, %s, %s)
+#         """, (event_time, event_type, connection_id, username, query_text ))
 
-        conn.commit()
-        conn.close()
+#         conn.commit()
+#         conn.close()
 
-    except snowflake.connector.errors.Error as e:
-        st.error(f"Error logging connection information: {str(e)}")
+#     except snowflake.connector.errors.Error as e:
+#         st.error(f"Error logging connection information: {str(e)}")
 
 
 # ============================================================================================================================================================
@@ -174,31 +183,29 @@ def log_connection_info(connection_id):
 
 
 # Log query information to the CONNECTION_LOG table
-def log_query_info(query, connection_id, conn):
-    try:
-        cursor = conn.cursor()
+# def log_query_info(query, connection_id, conn):
+#     try:
+#         cursor = conn.cursor()
 
-        # Log the query event
-        event_time = datetime.now()
-        event_type = "Query"
-        username = st.secrets["snowflake"]["user"]
-        query_text = query
+#         # Log the query event
+#         event_time = datetime.now()
+#         event_type = "Query"
+#         username = st.secrets["snowflake"]["user"]
+#         query_text = query
 
-        cursor.execute("""
-            INSERT INTO CONNECTION_LOG 
-            (EVENT_TIME, EVENT_TYPE, CONNECTION_ID, USERNAME, QUERY_TEXT)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (event_time, event_type, connection_id, username, query_text))
+#         cursor.execute("""
+#             INSERT INTO CONNECTION_LOG
+#             (EVENT_TIME, EVENT_TYPE, CONNECTION_ID, USERNAME, QUERY_TEXT)
+#             VALUES (%s, %s, %s, %s, %s)
+#         """, (event_time, event_type, connection_id, username, query_text))
 
-        
+#         conn.commit()
+#         log_connection_info(connection_id)
 
-        conn.commit()
-        log_connection_info(connection_id)
+#         cursor.close()
 
-        cursor.close()
-
-    except snowflake.connector.errors.Error as e:
-        st.error(f"Error logging query information: {str(e)}")
+#     except snowflake.connector.errors.Error as e:
+#         st.error(f"Error logging query information: {str(e)}")
 
 
 # ============================================================================================================================================================
@@ -244,14 +251,17 @@ def log_error_info(error_message, connection_id):
 # ============================================================================================================================================================
 
 # Function to execute a query and close the connection with logging
-def execute_query_and_close_connection(query, conn, connection_id):
+def execute_query_and_close_connection(query, conn, connection_id, parameters=None):
     try:
         cursor = conn.cursor()
 
         # Log the query event
-        log_query_info(query, connection_id, conn)
+        # log_query_info(query, connection_id, conn)
 
-        cursor.execute(query)
+        if parameters:
+            cursor.execute(query, tuple(parameters))
+        else:
+            cursor.execute(query)
 
         # Fetch the result
         result = cursor.fetchall()
@@ -322,6 +332,9 @@ def display_execution_summary():
     purchased_percentage = float(df['PURCHASED_PERCENTAGE'].iloc[0])
     formatted_percentage = f"{purchased_percentage * 100:.2f}%"
 
+    # Sort the DataFrame by the "total_gaps" column in descending order
+    # df = df.sort_values(by="TOTAL_IN_SCHEMATIC", ascending=False)
+
     return df['TOTAL_IN_SCHEMATIC'].iloc[0], df['PURCHASED'].iloc[0], total_gaps, formatted_percentage
 
 
@@ -335,7 +348,7 @@ def display_execution_summary():
 # -------------------------------------------------------------------------------------------------------------------------------------------
 
 # ===========================================================================================================================================
-# Block for Function that will connect to DB and pull data to display the the bar chart from view - Execution Summary  - Data in column 3
+# Block for Function that will connect to DB and pull data to display the the bar chart from view - Execution Summary  - Data in row 1 column 2
 # ===========================================================================================================================================
 
 # Function to fetch data for the bar chart
@@ -480,21 +493,107 @@ GROUP BY
 # End Function to pull product by supplier scatter chart once the supplier have been selected from the sidebar selection widget
 # =================================================================================================================================================
 
-# --------------------------------------------------------------------------------------------------------------------------------------------------
 
-# ===========================================================================================================================================
-# Block for Function that will connect to DB and pull data to display the the bar chart from view - Execution Summary  - Data in column 3
-# ===========================================================================================================================================
+# -----------------------------------------------------------------------------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------
 
+# ===========================================================================================================================================
+# Call display_execution_summary() to get the execution summary data and display it for the user in row 1 column 1
+# ===========================================================================================================================================
+
+# Fetch the data from the function
+total_in_schematic, total_purchased, total_gaps, formatted_percentage = display_execution_summary()
+
+# Display the values in col1
+with col1:
+    # Add styled title above the content in the second column
+    col1.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary</h1>", unsafe_allow_html=True)
+    border_color = st.get_option("theme.secondaryBackgroundColor")
+    # Use st.markdown with HTML and CSS to create a styled container
+    col1.markdown(
+        f"""
+        <div style='
+            background-color:#EEEEEE;   /*#D9D9D6*/
+            secondaydayBackgroundColor: #ff0000;
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            text-align: right;
+            border:border_color;  /* Add dark grey border */
+            height: 60vh;  /* Set a minimum height */'>
+            <p> Execution Summary<p>
+            <p>Total In Schematic: {total_in_schematic}</p>
+            <p>Total Purchased: {total_purchased}</p>
+            <p>Total Gaps: {total_gaps}</p>
+            <p>Overall Purchased Percentage: {formatted_percentage}</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ===========================================================================================================================================
+# End block to Call display_execution_summary() to get the execution summary data and display it for the user in column 2
+# ===========================================================================================================================================
+
+# -------------------------------------------------------------------------------------------------------------------------------------------
+
 # ===============================================================================================================================================
-# This block will call salesperson data from view and display the salesperson, total_distribution, total_gaps, and Execution_percentage
+# Call function fetch_chain_schematic_data() to get data for bar chart and display it in column 3
+# ===============================================================================================================================================
+# Fetch chain schematic data
+chain_schematic_data = fetch_chain_schematic_data()
+
+# Create a bar chart using Altair with percentage labels on bars
+bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
+    x='CHAIN_NAME',
+    y='TOTAL_IN_SCHEMATIC',
+    color=alt.Color('CHAIN_NAME', scale=alt.Scale(scheme='viridis')),
+    # color=alt.Color('PURCHASED_PERCENTAGE', scale=alt.Scale(scheme='viridis')),
+    tooltip=['CHAIN_NAME', 'TOTAL_IN_SCHEMATIC', 'PURCHASED', 'PURCHASED_PERCENTAGE']
+).properties(
+    width=800,
+    height=400,
+).configure_title(
+    align='center',
+    fontSize=16
+).encode(
+    # text=alt.Text('PURCHASED_PERCENTAGE:Q', format='.2f')
+    text=alt.Text('CHAIN_NAME')
+).configure_mark(
+    fontSize=14
+)
+
+# Display the bar chart in the third column
+col2.altair_chart(bar_chart, use_container_width=False)
+
+# ===============================================================================================================================================
+# END Call function fetch_chain_schematic_data() to get data for bar chart and display it in column 3
+# ===============================================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------
+
+# ===================================================================================================================================================
+# Add columns in row 2 of the page
+# ===================================================================================================================================================
+
+# Add a new row with columns 1 and 2
+row2_col1, row2_col2 = st.columns([30, 70], gap="small")
+
+# ===================================================================================================================================================
+# END Add columns in row 2 of the page
+# ===================================================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# ===============================================================================================================================================
+# This block will call salesperson data from view and display the salesperson, total_distribution, total_gaps, and Execution_percentage Row 1 Col1
 # ===============================================================================================================================================
 
 # Execute the SQL query to retrieve the salesperson's store count
-query = "SELECT SALESPERSON, TOTAL_DISTRIBUTION, TOTAL_GAPS, EXECUTION_PERCENTAGE FROM SALESPERSON_EXECUTION_SUMMARY order by TOTAL_DISTRIBUTION DESC"
+query = "SELECT SALESPERSON, TOTAL_DISTRIBUTION, TOTAL_GAPS, EXECUTION_PERCENTAGE FROM SALESPERSON_EXECUTION_SUMMARY order by TOTAL_GAPS DESC"
 
 # Create a connection
 conn, connection_id = create_snowflake_connection()
@@ -521,26 +620,30 @@ salesperson_df['EXECUTION_PERCENTAGE'] = salesperson_df['EXECUTION_PERCENTAGE'].
 
 # Rename the columns
 salesperson_df = salesperson_df.rename(
-    columns={'SALESPERSON': 'Salesperson', 'TOTAL_DISTRIBUTION': 'Total Distibution', 'TOTAL_GAPS': 'Total Gaps',
+    columns={'SALESPERSON': 'Salesperson', 'TOTAL_DISTRIBUTION': 'Distribution', 'TOTAL_GAPS': 'Gaps',
              'EXECUTION_PERCENTAGE': 'Execution Percentage'})
 
 # Limit the number of displayed rows to 6
 limited_salesperson_df = salesperson_df.head(100)
 
+# Apply bold styling to each cell in the 'Salesperson' column
+limited_salesperson_df_html = limited_salesperson_df.to_html(classes=["table", "table-striped"], escape=False,
+                                                             index=False)
+for index, row in limited_salesperson_df.iterrows():
+    limited_salesperson_df_html = limited_salesperson_df_html.replace(f'<td>{row["Salesperson"]}</td>',
+                                                                      f'<td style="font-weight: bold;">{row["Salesperson"]}</td>')
+
 # Define the maximum height for the table container
 max_height = '365px'
 
-## Adjust the width of the table by changing the 'width' property
-table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #EEEEEE; padding: 1% 2% 2% 0%; border-radius: 10px; border-left: 0.5rem solid #9AD8E1 !important; box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important; width: 100%;"
+# Adjust the width of the table by changing the 'width' property
+table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #EEEEEE;  text-align: center; padding: 1% 2% 2% 0%; border-radius: 10px; border-left: 0.5rem solid #9AD8E1 !important; box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important; width: 100%;"
 
 # Wrap the table in an HTML div with the specified style
-table_html = limited_salesperson_df.to_html(classes=["table", "table-striped"], escape=False, index=False)
-
-# Add style to the table tag to allow automatic column width adjustment
-table_with_scroll = f"<div style='{table_style}'><table style='table-layout: auto;'><colgroup><col style='width: 60%;'><col style='width: 30%;'><col style='width: 30%;'></colgroup>{table_html}</table></div>"
+table_with_scroll = f"<div style='{table_style}'><table style='table-layout, 'text-align: left',auto;'><colgroup><col style='width: 20%;'><col style='width: 10%;'><col style='width: 30%;'></colgroup>{limited_salesperson_df_html}</table></div>"
 
 # Display the table in col1 with custom formatting
-with col1:
+with row2_col1:
     # Display the table with custom formatting
     st.markdown(table_with_scroll, unsafe_allow_html=True)
     # Add a download link for the Excel file
@@ -550,86 +653,95 @@ with col1:
     st.download_button(label="Download Excel", data=excel_data, file_name="salesperson_execution_summary.xlsx",
                        key='download_button')
 
-# ===============================================================================================================================================
+# ==================================================================================================================================================
 # End  This block will call salesperson data from view and display the salesperson, total_distribution, total_gaps, and Execution_percentage
-# ========================================================================================================================================================
+# ==================================================================================================================================================
 
-# -----------------------------------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-# ===========================================================================================================================================
-# Call display_execution_summary() to get the execution summary data and display it for the user in column 2
-# ===========================================================================================================================================
+# ===================================================================================================================================================
+# add table in col 2 row 2
+# ===================================================================================================================================================
+# Execute the SQL query to retrieve the salesperson's store count
+query = "SELECT SALESPERSON, TOTAL_GAPS, EXECUTION_PERCENTAGE, LOG_DATE FROM SALESPERSON_EXECUTION_SUMMARY_TBL ORDER BY TOTAL_GAPS DESC"
 
-# Fetch the data from the function
-total_in_schematic, total_purchased, total_gaps, formatted_percentage = display_execution_summary()
+# Create a connection
+conn, connection_id = create_snowflake_connection()
 
-# Display the values in col2
-with col2:
-    # Add centered and styled title above the content in the second column
-    col2.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary</h1>", unsafe_allow_html=True)
+# Execute the query and get the result
+result = execute_query_and_close_connection(query, conn, connection_id)
 
-    # Center-align each markdown line
-    st.markdown(f"<p style='text-align: center;'>Total In Schematic: {total_in_schematic}</p>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center;'>Total Purchased: {total_purchased}</p>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center;'>Total Gaps: {total_gaps}</p>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center;'>Overall Purchased_Percentage: {formatted_percentage}</p>",
-                unsafe_allow_html=True)
+# Create a DataFrame from the query results
+gap_df = pd.DataFrame(result, columns=['SALESPERSON', 'TOTAL_GAPS', 'EXECUTION_PERCENTAGE', 'LOG_DATE'])
 
-# ===========================================================================================================================================
-# End block to Call display_execution_summary() to get the execution summary data and display it for the user in column 2
-# ===========================================================================================================================================
+# Rename the columns
+gap_df = gap_df.rename(
+    columns={'SALESPERSON': 'Salesperson', 'TOTAL_GAPS': 'Gaps', 'EXECUTION_PERCENTAGE': 'Execution Percentage',
+             'LOG_DATE': 'Log Date'})
 
-# -------------------------------------------------------------------------------------------------------------------------------------------
+# Limit the number of displayed rows to 100
+limited_gap_df = gap_df.head(100)
 
-# ===============================================================================================================================================
-# Call function fetch_chain_schematic_data() to get data for bar chart and display it in column 3
-# ===============================================================================================================================================
-# Fetch chain schematic data
-chain_schematic_data = fetch_chain_schematic_data()
+# Create the pivot table
+gap_df_pivot = gap_df.pivot_table(index=['Salesperson'], columns=['Log Date'], values='Gaps', margins=False)
 
-# Create a bar chart using Altair with percentage labels on bars
-bar_chart = alt.Chart(chain_schematic_data).mark_bar().encode(
-    x='CHAIN_NAME',
-    y='TOTAL_IN_SCHEMATIC',
-    color=alt.Color('PURCHASED_PERCENTAGE', scale=alt.Scale(scheme='viridis')),
-    tooltip=['CHAIN_NAME', 'TOTAL_IN_SCHEMATIC', 'PURCHASED', 'PURCHASED_PERCENTAGE']
-).properties(
-    width=800,
-    height=400,
-).configure_title(
-    align='center',
-    fontSize=16
-).encode(
-    text=alt.Text('PURCHASED_PERCENTAGE:Q', format='.2f')
-).configure_mark(
-    fontSize=14
-)
+# Sort the rows by the "Gaps" column in descending order
+gap_df_pivot = gap_df_pivot.sort_values(by=gap_df_pivot.columns[0], axis=0, ascending=False)
 
-# Display the bar chart in the third column
-col3.altair_chart(bar_chart, use_container_width=False)
+# Define the maximum height for the table container
+max_height = '365px'
 
-# ===============================================================================================================================================
-# END Call function fetch_chain_schematic_data() to get data for bar chart and display it in column 3
-# ===============================================================================================================================================
+## Adjust the width of the table by changing the 'width' property
+table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #EEEEEE;  text-align: left; padding: 1% 2% 2% 0%; border-radius: 10px; border-left: 0.5rem solid #9AD8E1 !important; box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important; width: 100%;"
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------
+# Wrap the table in an HTML div with the specified style
+table_html = gap_df_pivot.to_html(classes=["table", "table-striped"], escape=False)
+
+# Add style to the table tag to allow automatic column width adjustment
+table_with_scroll = f"<div style='{table_style}'><table style='table-layout, 'text-align: left',auto;'><colgroup><col style='width: 20%;'><col style='width: 10%;'><col style='width: 30%;'></colgroup>{table_html}</table></div>"
+
+# Display the table in col2 row 2 with custom formatting
+with row2_col2:
+    # Display the table with custom formatting
+    st.markdown(table_with_scroll, unsafe_allow_html=True)
+
+    # Add a download link for the Excel file
+    excel_data = BytesIO()
+    gap_df_pivot.to_excel(excel_data, index=True)
+    excel_data.seek(0)
+    st.download_button(label="Download Excel", data=excel_data, file_name="gap_history_report.xlsx",
+                       key='download_gap_button')
 
 # ==================================================================================================================================================
 # This Block of codes creates the sidebar multi select widget for selecting suppliers then calls function to get supplier data then display it in
 # the barchart for each supplier.  Additonally it calls the function to get the data for the supplier to populate the scatter chart for each product
 # for the selected supplier
 # ====================================================================================================================================================
-# Add centered and styled title above the bar chart
-st.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Supplier</h1>",
-            unsafe_allow_html=True)
+
 
 # Create a sidebar select widget for selecting suppliers
 selected_suppliers = st.sidebar.multiselect("Select Suppliers", fetch_supplier_names())
 
+# ===================================================================================================================================================
+# Add columns in row 2 of the page
+# ===================================================================================================================================================
+
+# Add a new row with columns 1 and 2
+row3_col1 = st.columns([100], gap="small")
+
+# ===================================================================================================================================================
+# END Add columns in row 2 of the page
+# ===================================================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------
+
 # ==================================================================================================================================================
 # Creates barchart for supplier execution in total in schematic, total purchased and percent purchased against total in schematic
 # =================================================================================================================================================
-
+# with row3_col1:
+# Add centered and styled title above the bar chart
+st.markdown("<h1 style='text-align: center; font-size: 18px;'>Execution Summary by Supplier</h1>",
+            unsafe_allow_html=True)
 # Fetch supplier schematic summary data for selected suppliers if there are any
 supplier_schematic_summary_data = None
 if selected_suppliers:
