@@ -101,10 +101,17 @@ def format_sales_report(workbook):
     # Copy values before the # to store name column
     for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
         for cell in row:
-            if '#' in str(cell.value):
-                cell_offset = ws.cell(row=cell.row, column=2)
-                store_name = str(cell.value).split('#')[0].replace("'", "")
-                cell_offset.value = store_name
+            cell_offset = ws.cell(row=cell.row, column=2)
+            cell_value = str(cell.value)
+
+            # Check if '#' is in the cell value
+            if '#' in cell_value:
+                store_name = cell_value.split('#')[0].replace("'", "")
+            else:
+                # If '#' is not present, keep the entire cell value
+                store_name = cell_value.replace("'", "")
+
+            cell_offset.value = store_name
 
     # Remove column C
     ws.delete_cols(3)
@@ -193,8 +200,9 @@ def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
     df = pd.read_excel(uploaded_file)
     
    
-    # replace NaN values with "NULL"
-    df.fillna(value=np.nan, inplace=True)
+    # # replace NaN values with "NULL"
+    # df.fillna(value=np.nan, inplace=True)
+    df.fillna(value="NULL", inplace=True)
     
 
 
