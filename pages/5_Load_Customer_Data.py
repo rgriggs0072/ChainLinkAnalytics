@@ -419,8 +419,8 @@ if uploaded_file:
 # Writes Customer table data to the customers  table in snowflake
 #----------------------------------------------------------------------------------------------------------------------------------------------------
 def write_to_customers_snowflake(df, warehouse, database, schema):
-    # Modify DataFrame values directly to replace 'NAN' with empty string ''
-    df = df.replace('NAN', np.nan)
+    # # replace NaN values with "NULL"
+    df.fillna(value="NULL", inplace=True)
 
     # Load Snowflake credentials from the secrets.toml file
     snowflake_creds = st.secrets["snowflake"]
