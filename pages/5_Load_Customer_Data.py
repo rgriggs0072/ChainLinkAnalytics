@@ -1,7 +1,6 @@
 # Import required libraries
 from importlib.resources import Package
 from multiprocessing.connection import wait
-from this import s
 import snowflake.connector
 import streamlit as st
 import pandas as pd
@@ -11,6 +10,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
 import numpy as np
 from io import BytesIO
+from Home import create_snowflake_connection
+#from Home import log_connection_info
+from Home import log_error_info
 from openpyxl import Workbook
 from datetime import datetime
 from PIL import Image
@@ -148,12 +150,15 @@ def format_Customers_Dataload(workbook):
     return workbook
 
 #=====================================================================================================================================
-# ENDGIT ADD . The following function will reformat the Customers Excel worksheet into importable Data
+# END The following function will reformat the Customers Excel worksheet into importable Data
 #=====================================================================================================================================
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------
+
+#=====================================================================================================================================
 # Handles page look, creates uploader and once uploaded provides button to call the format function
+#=====================================================================================================================================
 
 # Make the text red
 st.markdown('<p style="color: red;">Upload Customer Report from Encompass</p>', unsafe_allow_html=True)
@@ -176,11 +181,14 @@ if uploaded_file is not None:
         new_workbook.save(stream)
         stream.seek(0)
         st.download_button(label="Download formatted file", data=stream.read(), file_name=new_filename, mime='application/vnd.ms-excel')
-    
-
-
+        
+#=====================================================================================================================================
+# END Handles page look, creates uploader and once uploaded provides button to call the format function
 #=====================================================================================================================================
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+    
+#=====================================================================================================================================
 # The below function formats the Products report to prepare for upload to snowflake table
 #=====================================================================================================================================
 
@@ -275,10 +283,17 @@ def format_Products_Dataload(workbook):
     return workbook
 
 
+#=====================================================================================================================================
+# END The below function formats the Products report to prepare for upload to snowflake table
+#=====================================================================================================================================
+
+#------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-
+#=====================================================================================================================================
+# The below block of code provides the upload and reformat button for the products report from company's products list tables
+# and calls the function format_Products_Dataload to do the formatting
+#=====================================================================================================================================
 
 
 # Add horizontal line
@@ -307,14 +322,24 @@ if uploaded_file is not None:
         st.download_button(label="Download formatted file", data=stream.read(), file_name=new_filename, mime='application/vnd.ms-excel')
     
 
+#=====================================================================================================================================
+# END The below block of code provides the upload and reformat button for the products report from company's products list tables
+# and calls the function format_Products_Dataload to do the formatting
+#=====================================================================================================================================
 
+#-------------------------------------------------------------------------------------------------------------------------------------
 
+#=====================================================================================================================================
+# The below function is called when a new product table needs to be build with the formatted spreasheet from the clustomers products 
+# list
+#=====================================================================================================================================
 
-def write_to_products_snowflake(df, warehouse, database, schema):
+def write_to_products_snowflake(df):
     
     
     # read Excel file into pandas DataFrame
     df = pd.read_excel(uploaded_file)
+    
     
     
     
@@ -325,18 +350,21 @@ def write_to_products_snowflake(df, warehouse, database, schema):
     # Replace NaN values with NULL in the DataFrame
     df.fillna(value='NULL', inplace=True)
     
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
+    # Create a connection using function create_snowflake_connection()
+    conn, connection_id = create_snowflake_connection()
+    
+    # # Load Snowflake credentials from the secrets.toml file
+    # snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-    account=snowflake_creds["account"],
-    user=snowflake_creds["user"],
-    password=snowflake_creds["password"],
-    warehouse=snowflake_creds["warehouse"],
-    database=snowflake_creds["database"],
-    schema=snowflake_creds["schema"]
-    )
+    # # Establish a new connection to Snowflake
+    # conn = snowflake.connector.connect(
+    # account=snowflake_creds["account"],
+    # user=snowflake_creds["user"],
+    # password=snowflake_creds["password"],
+    # warehouse=snowflake_creds["warehouse"],
+    # database=snowflake_creds["database"],
+    # schema=snowflake_creds["schema"]
+    # )
     
     
     # Convert the DataFrame to a list of tuples
@@ -383,62 +411,40 @@ def write_to_products_snowflake(df, warehouse, database, schema):
     cursor.close()
     conn.close()
 
+#=====================================================================================================================================
+# END The below function is called when a new product table needs to be build with the formatted spreasheet from the clustomers products 
+# list
+#=====================================================================================================================================
 
+#-------------------------------------------------------------------------------------------------------------------------------------
 
-# Add horizontal line
-st.markdown("<hr>", unsafe_allow_html=True)
-# Make the text red
-st.markdown('<p style="color: red;">UPLOAD PRODUCTS REPORT AFTER IT HAS BEEN FORMATED</p>', unsafe_allow_html=True)
-
-# create file uploader
-uploaded_file = st.file_uploader("Browse or Select File", type=["xlsx"])
-
-
-# check if file was uploaded
-if uploaded_file:
-    # read Excel file into pandas DataFrame
-    df = pd.read_excel(uploaded_file)
-    #print(df.columns)
-    # display DataFrame in Streamlit
-    st.dataframe(df)
-
-
-    # write DataFrame to Snowflake on button click
-    if st.button("Import into Snowflake"):
-        with st.spinner('Uploading product data to Snowflake ...'):
-            write_to_products_snowflake(df, "COMPUTE_WH", "datasets", "DATASETS")
-            st.write("Product Data has been imported into Snowflake table! ", "Products")
-
-
-
-
-
-
-#====================================================================================================================================================
-
-# Writes Customer table data to the customers  table in snowflake
-#----------------------------------------------------------------------------------------------------------------------------------------------------
-def write_to_customers_snowflake(df, warehouse, database, schema):
+#=====================================================================================================================================
+# Function that is called to write Customer table data to the customers  table in snowflake
+#=====================================================================================================================================
+def write_to_customers_snowflake(df):
     # # replace NaN values with "NULL"
     df.fillna(value="NULL", inplace=True)
 
+    # Create a connection using function create_snowflake_connection()
+    conn, connection_id = create_snowflake_connection()
+    
     # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
+    # snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
+    # # Establish a new connection to Snowflake
+    # conn = snowflake.connector.connect(
+    #     account=snowflake_creds["account"],
+    #     user=snowflake_creds["user"],
+    #     password=snowflake_creds["password"],
+    #     warehouse=snowflake_creds["warehouse"],
+    #     database=snowflake_creds["database"],
+    #     schema=snowflake_creds["schema"]
+    # )
 
     # write DataFrame to Snowflake
     cursor = conn.cursor()
 
-   # Apply TRIM and UPPER to each column in the DataFrame
+    # Apply TRIM and UPPER to each column in the DataFrame
     df = df.applymap(lambda x: str(x).strip().upper() if pd.notna(x) else x)
 
     # Generate the SQL query
@@ -479,6 +485,16 @@ def write_to_customers_snowflake(df, warehouse, database, schema):
     cursor.close()
     conn.close()
 
+#=====================================================================================================================================
+# END Function that is called to write Customer table data to the customers  table in snowflake
+#=====================================================================================================================================
+
+#-------------------------------------------------------------------------------------------------------------------------------------
+
+#======================================================================================================================================
+# The below block of code handles the upload widget and then calls the write_to_customers_snowflake function to write the data
+# to snowflake
+#======================================================================================================================================
 
 # Add horizontal line
 st.markdown("<hr>", unsafe_allow_html=True)
@@ -493,11 +509,54 @@ if uploaded_file:
     # read Excel file into pandas DataFrame
     df = pd.read_excel(uploaded_file)
     # display DataFrame in Streamlit
-    st.dataframe(df)
+    #st.dataframe(df)
 
     # write DataFrame Customers to Snowflake Customers Table on button click
     if st.button("Import into Snowflake"):
         with st.spinner('Uploading Customers data to Snowflake ...'):
-            write_to_customers_snowflake(df, "COMPUTE_WH", "datasets", "DATASETS")
+            write_to_customers_snowflake(df)
             st.write("Customer Data has been imported into Snowflake table! ", "Customers")
 
+#======================================================================================================================================
+# END The below block of code handles the upload widget and then calls the write_to_customers_snowflake function to write the data
+# to snowflake
+#======================================================================================================================================
+
+#--------------------------------------------------------------------------------------------------------------------------------------
+
+#=====================================================================================================================================
+# The below block of code handles the upload of the formatted products spreasheet and then calls the function 
+# write_to_products_snowflake to upload the data to the products table in snowflake
+#=====================================================================================================================================
+
+# Add horizontal line
+st.markdown("<hr>", unsafe_allow_html=True)
+# Make the text red
+st.markdown('<p style="color: red;">UPLOAD PRODUCTS REPORT AFTER IT HAS BEEN FORMATED</p>', unsafe_allow_html=True)
+
+# create file uploader
+uploaded_file = st.file_uploader("Browse or Select File", type=["xlsx"])
+
+
+# check if file was uploaded
+if uploaded_file:
+    # read Excel file into pandas DataFrame
+    df = pd.read_excel(uploaded_file)
+    #print(df.columns)
+    # display DataFrame in Streamlit
+    #st.dataframe(df)
+
+
+    # write DataFrame to Snowflake on button click
+    if st.button("Import into Snowflake"):
+        with st.spinner('Uploading product data to Snowflake ...'):
+            write_to_products_snowflake(df)
+            st.write("Product Data has been imported into Snowflake table! ", "Products")
+
+
+
+
+#=====================================================================================================================================
+# END The below block of code handles the upload of the formatted products spreasheet and then calls the function 
+# write_to_products_snowflake to upload the data to the products table in snowflake
+#=====================================================================================================================================
