@@ -438,20 +438,23 @@ def write_to_customers_snowflake(df, warehouse, database, schema):
     # write DataFrame to Snowflake
     cursor = conn.cursor()
 
+   # Apply TRIM and UPPER to each column in the DataFrame
+    df = df.applymap(lambda x: str(x).strip().upper() if pd.notna(x) else x)
+
     # Generate the SQL query
     values = ', '.join([str(tuple(row)) for row in df.values])
     sql_query = f"""
     CREATE OR REPLACE TABLE CUSTOMERS AS
     SELECT
         CAST(CUSTOMER_ID AS NUMBER) AS CUSTOMER_ID,
-        CAST(CHAIN_NAME AS VARCHAR) AS CHAIN_NAME,
+        CAST(TRIM(UPPER(CHAIN_NAME)) AS VARCHAR) AS CHAIN_NAME,
         CAST(STORE_NUMBER AS NUMBER) AS STORE_NUMBER,
-        CAST(STORE_NAME AS VARCHAR) AS STORE_NAME,
-        CAST(ADDRESS AS VARCHAR) AS ADDRESS,
-        CAST(CITY AS VARCHAR) AS CITY,
-        CAST(COUNTY AS VARCHAR) AS COUNTY,
-        CAST(SALESPERSON AS VARCHAR) AS SALESPERSON,
-        CAST(ACCOUNT_STATUS AS VARCHAR) AS ACCOUNT_STATUS
+        CAST(TRIM(UPPER(STORE_NAME)) AS VARCHAR) AS STORE_NAME,
+        CAST(TRIM(UPPER(ADDRESS)) AS VARCHAR) AS ADDRESS,
+        CAST(TRIM(UPPER(CITY)) AS VARCHAR) AS CITY,
+        CAST(TRIM(UPPER(COUNTY)) AS VARCHAR) AS COUNTY,
+        CAST(TRIM(UPPER(SALESPERSON)) AS VARCHAR) AS SALESPERSON,
+        CAST(TRIM(UPPER(ACCOUNT_STATUS)) AS VARCHAR) AS ACCOUNT_STATUS
     FROM
         (VALUES {values}) AS tmp(
             CUSTOMER_ID,
