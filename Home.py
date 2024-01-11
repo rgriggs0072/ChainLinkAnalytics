@@ -20,12 +20,6 @@ from io import BytesIO
 
 from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
 
-
-# UPDATE
-# Randy Griggs - 12/19/2023
-
-
-
 # Configure the logger
 logging.basicConfig(level=logging.INFO)
 db_logger = logging.getLogger(__name__)
@@ -292,7 +286,7 @@ def execute_query_and_close_connection(query, conn, connection_id, parameters=No
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # ============================================================================================================================================================
-# 12/3/2023 below block with create the db connection and run the stored procedure process_execution_summary() which builds the tables necessay to
+# 12/3/2023 below block with create the db connection and run the stored procedure process_execution_summary() which builds the tables necessary to
 # Populate the chain bar graph on the home page
 # ============================================================================================================================================================
 # Create a connection
@@ -311,22 +305,22 @@ execute_query_and_close_connection(initial_query, conn, connection_id)
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # ===========================================================================================================================================
-# Function that will connect to DB and pull data to display the Execution Summary Data in column 2
+# Function that will connect to DB and pull data to display the Execution Summary Data in Row 1 column 1
 # ===========================================================================================================================================
 
 ## Function to calculate and return results to calling code execution summary
 def display_execution_summary():
     # Your query
     query = "SELECT SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM GAP_REPORT;"
-    
-    # Create a connection
+
+    # Create a connection using function create_snowflake_connection()
     conn, connection_id = create_snowflake_connection()
 
-    
-    # Execute the query and get the result
+    # Execute the query and get the result from the function execute_query_and_close_connection(query, conn, connection_id) passing the query
+    # the connction information and the connection_id
     result = execute_query_and_close_connection(query, conn, connection_id)
-    #st.write(result)
-    # Process the result as neededr
+
+    # Process the results from above to display the results
     df = pd.DataFrame(result, columns=["TOTAL_IN_SCHEMATIC", "PURCHASED", "PURCHASED_PERCENTAGE"])
 
     total_gaps = df['TOTAL_IN_SCHEMATIC'].iloc[0] - df['PURCHASED'].iloc[0]
@@ -340,7 +334,7 @@ def display_execution_summary():
 
 
 # ===========================================================================================================================================
-# End Block for Function that will connect to DB and pull data to display the Execution Summary Data in column 2
+# End Block for Function that will connect to DB and pull data to display the Execution Summary Data in Row 1 column 1
 # ===========================================================================================================================================
 
 # -------------------------------------------------------------------------------------------------------------------------------------------
@@ -361,7 +355,7 @@ def fetch_chain_schematic_data():
 
     # Create a connection
     conn, connection_id = create_snowflake_connection()
-    print(conn)
+
     # Execute the query and get the result
     result = execute_query_and_close_connection(query, conn, connection_id)
 
@@ -654,14 +648,79 @@ with row2_col1:
     st.download_button(label="Download Excel", data=excel_data, file_name="salesperson_execution_summary.xlsx",
                        key='download_button')
 
+
 # ==================================================================================================================================================
 # End  This block will call salesperson data from view and display the salesperson, total_distribution, total_gaps, and Execution_percentage
 # ==================================================================================================================================================
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 
+# ============================================================================================================================================================
+# Function to check if todays privot table data has processed.  If so will give user option to overwrite the data and if not the procedure BUILD_GAP_TRACKING()
+# Procedure will update the table SALESPERSON_EXECUTION_SUMMARY_TBL with todays data
+# ============================================================================================================================================================
+
+# Function to check and process data
+def check_and_process_data():
+    # Create a connection to Snowflake
+    conn, connection_id = create_snowflake_connection()
+
+    # Create a cursor object
+    cursor = conn.cursor()
+
+    try:
+        # Check if data already processed for today
+        check_query = f"SELECT COUNT(*) FROM SALESPERSON_EXECUTION_SUMMARY_TBL WHERE LOG_DATE = CURRENT_DATE()"
+        cursor.execute(check_query)
+        result = cursor.fetchone()
+
+        if result[0] > 0:
+            # Data already processed for today, ask if they want to overwrite
+            st.warning("Data for today already processed. Do you want to overwrite it?")
+
+            # Add "Yes" and "No" buttons
+            yes_button = st.button("Yes, overwrite")
+            no_button = st.button("No, keep existing data")
+
+            if yes_button:
+                # If yes, remove data for today
+                delete_query = f"DELETE FROM SALESPERSON_EXECUTION_SUMMARY_TBL WHERE LOG_DATE = CURRENT_DATE()"
+                cursor.execute(delete_query)
+
+                # Call the stored procedure to update the table with new data
+                build_gap_tracking_query = "CALL BUILD_GAP_TRACKING()"
+                cursor.execute(build_gap_tracking_query)
+
+                st.success("Data overwritten and BUILD_GAP_TRACKING() executed successfully.")
+
+            elif no_button:
+                # If no, do nothing
+                st.info("Data not overwritten.")
+
+        else:
+            # No data for today, proceed with the stored procedure
+            build_gap_tracking_query = "CALL BUILD_GAP_TRACKING()"
+            cursor.execute(build_gap_tracking_query)
+
+            st.success("BUILD_GAP_TRACKING() executed successfully.")
+
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+
+    finally:
+        # Close the cursor and connection
+        cursor.close()
+        conn.close()
+
+
+# ============================================================================================================================================================
+# END Function to check if todays privot table data has processed.  If so will give user option to overwrite the data and if not the procedure BUILD_GAP_TRACKING()
+# Procedure will update the table SALESPERSON_EXECUTION_SUMMARY_TBL with todays data
+# ============================================================================================================================================================
+
+
 # ===================================================================================================================================================
-# This block of code adds a pivot table to row 2 column 2 that show tracking of gaps for each saleperson
+# Add Pivot table in col 2 row 2 to show salesperson, gaps by data to see progress against gaps over time
 # ===================================================================================================================================================
 # Execute the SQL query to retrieve the salesperson's store count
 query = "SELECT SALESPERSON, TOTAL_GAPS, EXECUTION_PERCENTAGE, LOG_DATE FROM SALESPERSON_EXECUTION_SUMMARY_TBL ORDER BY TOTAL_GAPS DESC"
@@ -686,20 +745,35 @@ limited_gap_df = gap_df.head(100)
 # Create the pivot table
 gap_df_pivot = gap_df.pivot_table(index=['Salesperson'], columns=['Log Date'], values='Gaps', margins=False)
 
-# Sort the rows by the "Gaps" column in descending order
-gap_df_pivot = gap_df_pivot.sort_values(by=gap_df_pivot.columns[0], axis=0, ascending=False)
+# Sort the DataFrame by the date column in descending order
+gap_df_sorted = gap_df.sort_values(by='Log Date', axis=0, ascending=False)
+
+# Extract the latest 12 columns
+latest_columns = gap_df_sorted['Log Date'].unique()[:12]
+
+# Reorder the DataFrame to display the latest columns
+gap_df_pivot_limited = gap_df_pivot[latest_columns]
+
+# Convert the column names to DateTime objects and format them
+gap_df_pivot_limited.columns = pd.to_datetime(gap_df_pivot_limited.columns).strftime('%y/%m/%d')
 
 # Define the maximum height for the table container
 max_height = '365px'
 
-## Adjust the width of the table by changing the 'width' property
-table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #EEEEEE;  text-align: left; padding: 1% 2% 2% 0%; border-radius: 10px; border-left: 0.5rem solid #9AD8E1 !important; box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important; width: 100%;"
+# Adjust the width of the table by changing the 'width' property
+table_style = f"max-height: {max_height}; overflow-y: auto; background-color: #EEEEEE; text-align: center; padding: 1% 2% 2% 0%; border-radius: 10px; border-left: 0.5rem solid #9AD8E1 !important; box-shadow: 0 0.10rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important; width: 100%;"
 
-# Wrap the table in an HTML div with the specified style
-table_html = gap_df_pivot.to_html(classes=["table", "table-striped"], escape=False)
+# Apply a smaller font size to the 'Log Date' column
+table_html = gap_df_pivot_limited.to_html(classes=["table", "table-striped"], escape=False, render_links=True)
+
+# Add custom style for the 'Log Date' column to reduce font size
+table_html = table_html.replace('<th>Log Date</th>', '<th style="font-size: smaller;">Log Date</th>')
+
+# Create colgroup HTML tag with col tags for each column width
+colgroup_html = ''.join([f"<col style='width: {100 / len(latest_columns)}%;'>" for _ in latest_columns])
 
 # Add style to the table tag to allow automatic column width adjustment
-table_with_scroll = f"<div style='{table_style}'><table style='table-layout, 'text-align: left',auto;'><colgroup><col style='width: 20%;'><col style='width: 10%;'><col style='width: 30%;'></colgroup>{table_html}</table></div>"
+table_with_scroll = f"<div style='{table_style}'><table style='table-layout, text-align: left, auto;'><colgroup>{colgroup_html}</colgroup>{table_html}</table></div>"
 
 # Display the table in col2 row 2 with custom formatting
 with row2_col2:
@@ -708,18 +782,17 @@ with row2_col2:
 
     # Add a download link for the Excel file
     excel_data = BytesIO()
-    gap_df_pivot.to_excel(excel_data, index=True)
+    gap_df_pivot_limited.to_excel(excel_data, index=True)
     excel_data.seek(0)
     st.download_button(label="Download Excel", data=excel_data, file_name="gap_history_report.xlsx",
                        key='download_gap_button')
-    
-
 
 # ===================================================================================================================================================
-# END This block of code adds a pivot table to row 2 column 2 that show tracking of gaps for each saleperson
+# END Add Pivot table in col 2 row 2 to show salesperson, gaps by data to see progress against gaps over time
 # ===================================================================================================================================================
 
-#----------------------------------------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 # ==================================================================================================================================================
 # This Block of codes creates the sidebar multi select widget for selecting suppliers then calls function to get supplier data then display it in
@@ -833,3 +906,7 @@ if selected_suppliers:
 # =================================================================================================================================================
 
 
+with row2_col2:
+    # call the function in check_and_process_data in Streamlit
+    if st.button("Process Gap Pivot Data", key='process_gap_pivot'):
+        check_and_process_data()
