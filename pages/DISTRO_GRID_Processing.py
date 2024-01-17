@@ -1,534 +1,239 @@
-﻿import streamlit as st
-import pandas as pd
+﻿import ipaddress
+from msilib import datasizemask
+from re import S
+import streamlit as st
+import snowflake.connector
 import numpy as np
-from io import BytesIO
-from PIL import Image
-from openpyxl import Workbook
-import snowflake.connector  
-from Target_DG_format import format_TARGET_DistroGrid
-from Foodmaxx_DG_format import format_FOODMAXX_DistroGrid
-from Luckys_DG_format import format_LUCKYS_DistroGrid
-from Savemart_DG_format import format_SAVEMART_DistroGrid
-from Walmart_DG_format import format_WALMART_DistroGrid
-from Raleys_DG_format import format_RALEYS_DistroGrid
-from Safeway_DG_format import format_SAFEWAY_DistroGrid
-from Wholefoods_DG_format import format_WHOLEFOODS_DistroGrid
-from Sprouts_DG_format import format_SPROUTS_DistroGrid
-from Smart_Final_DG_format import format_SMART_FINAL_DistroGrid
-from Distro_Grid_Snowflake_Uploader import upload_SAFEWAY_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_FOODMAXX_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_WHOLEFOODS_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_SAVEMART_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_SMART_FINAL_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_LUCKYS_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_RALEYS_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_SPROUTS_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_TARGET_distro_grid_to_snowflake
-from Distro_Grid_Snowflake_Uploader import upload_WALMART_distro_grid_to_snowflake
-from openpyxl.utils.dataframe import dataframe_to_rows
-import openpyxl
-# from streamlit_extras.app_logo import add_logo #can be removed
-import datetime
+import getpass
+import socket
+from datetime import datetime
+import pandas as pd
+from datetime import date
+from Home import create_snowflake_connection
 
 
-
-#==================================================================================================================
-
-# THIS SECTION OF CODE HANDLES THE LOGO AND SETS THE VIEW TO WIDE 
-
-#==================================================================================================================
+def current_timestamp():
+    return datetime.now()
 
 
-# Displaying images on the front end
-from PIL import Image
-st.set_page_config(layout="wide")
+# =====================================================================================================================
+# Function to get current date and time for log entry
+# =====================================================================================================================
+def current_timestamp():
+    return datetime.now()
 
 
-def add_logo(logo_path, width, height):
-    """Read and return a resized logo"""
-    logo = Image.open(logo_path)
-    modified_logo = logo.resize((width, height))
-    return modified_logo
-#add_logo("./images/DeltaPacific_Logo.jpg", width = 200, height = 100)
-my_logo = add_logo(logo_path="./images/DeltaPacific_Logo.jpg", width=200, height = 100)
-st.sidebar.image(my_logo)
-st.sidebar.subheader("Delta Pacific Beverage Co.")
-st.subheader("Distribution Grid Processing")
+# =====================================================================================================================
+# End Function to get current date and time for log entry
+# =====================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+# ====================================================================================================================
+
+# Function to insert Activity to the log table
+
+# ====================================================================================================================
 
 
-## Add horizontal line
-st.markdown("<hr>", unsafe_allow_html=True)
-#==================================================================================================================
+def insert_log_entry(user_id, activity_type, description, success, ip_address, selected_option):
+    try:
+        conn = create_snowflake_connection()[0]  # Get connection object
+        cursor = conn.cursor()
 
-# END OF THE SECTION OF CODE HANDLES THE LOGO AND SETS THE VIEW TO WIDE 
+        # Replace 'LOG' with the actual name of your log table
+        insert_query = """
+        INSERT INTO LOG (TIMESTAMP, USERID, ACTIVITYTYPE, DESCRIPTION, SUCCESS, IPADDRESS, USERAGENT)
+        VALUES (CURRENT_TIMESTAMP(), %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (user_id, "SQL Activity", description, True, ip_address, selected_option))
 
-#==================================================================================================================
-
-
-#====================================================================================================================
-# HERE WE CREATE CONNECTION TO SNOWFLAKE
-#====================================================================================================================
-
-
-# Load Snowflake credentials from the secrets.toml file
-snowflake_creds = st.secrets["snowflake"]
-
-# Establish a new connection to Snowflake
-conn = snowflake.connector.connect(
-    account=snowflake_creds["account"],
-    user=snowflake_creds["user"],
-    password=snowflake_creds["password"],
-    warehouse=snowflake_creds["warehouse"],
-    database=snowflake_creds["database"],
-    schema=snowflake_creds["schema"]
-)
-
-#====================================================================================================================
-# End CREATE CONNECTION TO SNOWFLAKE
-#====================================================================================================================
+        cursor.close()
+    except Exception as e:
+        # Handle any exceptions that might occur while logging
+        print(f"Error occurred while inserting log entry: {str(e)}")
 
 
+# ====================================================================================================================
+# Function to insert Activity to the log table
+# ====================================================================================================================
 
-#====================================================================================================================
-# HERE WE CREATE THE FUNCTION TO GET THE CHAIN OPTIONS FROM SNOWFLAKE FOR THE DROPDOWN
-#====================================================================================================================
+# --------------------------------------------------------------------------------------------------------------------
 
-# Function to retrieve options from Snowflake table
-def get_options():
-    cursor = conn.cursor()
-    cursor.execute('SELECT option_name FROM options_table ORDER BY option_name')
-    options = [row[0] for row in cursor]
-    return options
+# ====================================================================================================================
+# Function to get IP address of the user carring out the activity
+# ====================================================================================================================
 
-#====================================================================================================================
-# END THE FUNCTION TO GET THE CHAIN OPTIONS FROM SNOWFLAKE FOR THE DROPDOWN
-#====================================================================================================================
+def get_local_ip():
+    try:
+        # Get the local host name
+        host_name = socket.gethostname()
+
+        # Get the IP address associated with the host name
+        ip_address = socket.gethostbyname(host_name)
+
+        return ip_address
+    except Exception as e:
+        print(f"An error occurred while getting the IP address: {e}")
+        return None
 
 
+# ====================================================================================================================
+# End Function to get IP address of the user carring out the activity
+# ====================================================================================================================
 
-#====================================================================================================================
-# THE FUNCTION TO UPDATE THE CHAIN OPTIONS IN SNOWFLAKE FOR THE DROPDOWN
-#====================================================================================================================
-# Function to update options in Snowflake table
-def update_options(options):
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM options_table')
-    for option in options:
-        cursor.execute("INSERT INTO options_table (option_name) VALUES (%s)", (option,))
+# --------------------------------------------------------------------------------------------------------------------
+
+
+def update_spinner(message):
+    st.text(f"{message} ...")
+
+
+def archive_data(conn, selected_option, data_to_archive):
+    if data_to_archive:
+        current_date = date.today().isoformat()
+        placeholders = ', '.join(['%s'] * (len(data_to_archive[0]) + 1))
+        insert_query = f"""
+            INSERT INTO DISTRO_GRID_ARCHIVE (
+                STORE_NAME, STORE_NUMBER, UPC, SKU, PRODUCT_NAME, 
+                MANUFACTURER, SEGMENT, YES_NO, ACTIVATION_STATUS, 
+                COUNTY, CHAIN_NAME, ARCHIVE_DATE
+            )
+            VALUES ({placeholders})
+        """
+
+        # Add current_date to each row in data_to_archive
+        data_to_archive_with_date = [row + (current_date,) for row in data_to_archive]
+
+        # Chunk the data into smaller batches
+        chunk_size = 5000
+        chunks = [data_to_archive_with_date[i:i + chunk_size] for i in
+                  range(0, len(data_to_archive_with_date), chunk_size)]
+
+        # Execute the query with parameterized values for each chunk
+        cursor_archive = conn.cursor()
+        for chunk in chunks:
+            cursor_archive.executemany(insert_query, chunk)
+        cursor_archive.close()
+
+
+def remove_archived_records(conn, selected_option):
+    cursor_to_remove = conn.cursor()
+    delete_query = "DELETE FROM DISTRO_GRID WHERE STORE_NAME = %s"
+
+    # Execute the delete query with the selected option (store_name)
+    cursor_to_remove.execute(delete_query, (selected_option,))
+
+    # Commit the delete operation
     conn.commit()
+    cursor_to_remove.close()
 
 
-#====================================================================================================================
-# END THE FUNCTION TO UPDATE THE CHAIN OPTIONS IN SNOWFLAKE FOR THE DROPDOWN
-#====================================================================================================================
+def load_data_into_distro_grid(conn, df, selected_option):
+    user_id = getpass.getuser()
+    local_ip = get_local_ip()
 
+    # Log the start of the SQL activity
+    description = f"Started {selected_option} Loading data into the Distro_Grid Table"
+    insert_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
 
-
-#===================================================================================================================
-
-# Create a container to hold the file uploader
-#===================================================================================================================
-file_container = st.container()
-
-#===================================================================================================================
-# ASSISGN AND Add a title to the container
-#===================================================================================================================
-
-with file_container:
-     st.subheader(":blue[Distro Grid Fomatting Utility]")
-
-
-#===================================================================================================================
-# END ASSISGN AND Add a title to the container
-#===================================================================================================================
-
-
-# Retrieve options from Snowflake table
-options = get_options()
-
-# Initialize session state variables
-if 'new_option' not in st.session_state:
-    st.session_state.new_option = ""
-if 'option_added' not in st.session_state:
-    st.session_state.option_added = False
-
-# Check if options are available
-if not options:
-    st.warning("No options available. Please add options to the list.")
-else:
-    # Create the dropdown in Streamlit
-    
- with file_container:
-     selected_option = st.selectbox(':red[Select the Chain Distro Grid to format]', options + ['Add new option...'], key="existing_option")
-
-        # Check if the selected option is missing and allow the user to add it
-if selected_option == 'Add new option...':
-    st.write("You selected: Add new option...")
-        
-    # Show the form to add a new option
-    with st.form(key='add_option_form', clear_on_submit=True):
-        new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
-        submit_button = st.form_submit_button('Add Option')
-            
-        if submit_button and new_option:
-            options.append(new_option)
-            update_options(options)
-            st.success('Option added successfully!')
-            st.session_state.option_added = True
-
-            # Clear the text input field
-            st.session_state.new_option = ""
-        
-        else:
-            # Display the selected option
-            st.write(f"You selected: {selected_option}")
-
-
-#====================================================================================================================
-# Distibution Grid formatter 
-
-#======================================================================================================================
-
-# Add the file uploader inside the container
-
-    
-with file_container:
-    uploaded_file = st.file_uploader(":red[Browse or drag here the Distribution Grid to Format]", type=["xlsx"])
-
-
-    # Add horizontal line
-
-
-
-formatted_workbook = None  # Initialize the variable
-
-        
-with file_container:
-    if st.button("Reformat DG Spreadsheet"):
-        if uploaded_file is None:
-            st.warning("Please upload a spreadsheet first.")
-        else:
-            # Load the workbook
-            workbook = openpyxl.load_workbook(uploaded_file)
-            
-
-            # Call the format_TARGET_DistroGrid function for 'TARGET' option
-            if selected_option == 'TARGET':
-                formatted_workbook = format_TARGET_DistroGrid(workbook)
-
-            elif selected_option == 'FOOD MAXX': #ADD THIS CONDITION FOR 'Food Maxx' OPTION
-                formatted_workbook = format_FOODMAXX_DistroGrid(workbook)
-
-            elif selected_option == 'LUCKY': #ADD THIS CONDITION FOR 'LUCKYS' OPTION
-                formatted_workbook = format_LUCKYS_DistroGrid(workbook)
-            
-            elif selected_option == 'SAFEWAY':  # Add this condition for 'SAFEWAY' option
-                formatted_workbook = format_SAFEWAY_DistroGrid(workbook)
-
-            elif selected_option == 'WALMART': #ADD THIS CONDITION FOR 'WALMART' OPTION
-                formatted_workbook = format_WALMART_DistroGrid(workbook)
-
-            elif selected_option == 'SAVE MART': #ADD THIS CONDITION FOR 'Save Mart' OPTION
-                formatted_workbook = format_SAVEMART_DistroGrid(workbook)
-
-            elif selected_option == 'SPROUTS': #ADD THIS CONDITION FOR 'SPROUTS' OPTION
-                formatted_workbook = format_SPROUTS_DistroGrid(workbook)
-
-            elif selected_option == 'RALEYS': #ADD THIS CONDITION FOR 'RALEYS' OPTION
-                formatted_workbook = format_RALEYS_DistroGrid(workbook)
-
-            elif selected_option == 'WHOLEFOODS': #ADD THIS CONDITION FOR 'WHOLEFOODS' OPTION
-                formatted_workbook = format_WHOLEFOODS_DistroGrid(workbook)
-
-            elif selected_option == 'SMART_FINAL': #ADD THIS CONDITION FOR 'SMART_FINAL' OPTION
-                formatted_workbook = format_SMART_FINAL_DistroGrid(workbook)
-
-
-                
-            else:
-                # Call other formatting functions for different options
-                # Add your code here for other formatting functions
-                formatted_workbook = workbook  # Use the original workbook
-
-            # Create a new filename based on the selected option
-            st.write("I am back")
-            new_filename = f"formatted_{selected_option}_spreadsheet.xlsx"
-
-            
-
-
-# Check if the workbook was successfully formatted
-if formatted_workbook is not None:
-    
-    # Save the formatted workbook to a stream
-    stream = BytesIO()
-    formatted_workbook.save(stream)
-    stream.seek(0)
-
-   
-    # Provide the download link for the formatted spreadsheet
-    with file_container:
-        st.download_button(
-            label="Download formatted spreadsheet",
-            data=stream.read(),
-            file_name=new_filename,
-            mime='application/vnd.ms-excel'
+    # Generate the SQL query for loading data into the Distribution Grid table
+    placeholders = ', '.join(['%s'] * len(df.columns))
+    insert_query = f"""
+        INSERT INTO Distro_Grid (
+            {', '.join(df.columns)}
         )
-        
-
-# Close the Snowflake connection
-conn.close()
-
-
-
-#=======================================================================================================
-# End of distribution grid formatting code
-#========================================================================================================
-
-
-#===========================================================================================================
-# create code uploader in preparation to write to snowflake
-#==========================================================================================================
-
-# Create a container to hold the file uploader
-snowflake_file_container = st.container()
-
-
-# Add a title to the container
-with snowflake_file_container:
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.subheader(":blue[Write Distribution Grid to Snowflake Utility]")
-
-with snowflake_file_container:
-
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
-
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
-    # Retrieve options from Snowflake table
-    options = get_options()
-
-# Initialize session state variables
-if 'new_option' not in st.session_state:
-    st.session_state.new_option = ""
-if 'option_added' not in st.session_state:
-    st.session_state.option_added = False
-
-# Check if options are available
-if not options:
-    st.warning("No options available. Please add options to the list.")
-else:
-    # Create the dropdown in Streamlit
-    
-        selected_option = st.selectbox(':red[Select the Chain Distro Grid to upload to Snowflake]', options + ['Add new option...'], key="existing_chain_option")
-
-        # Check if the selected option is missing and allow the user to add it
-        if selected_option == 'Add new option...':
-            st.write("You selected: Add new option...")
-        
-            # Show the form to add a new option
-            with st.form(key='add_option_form', clear_on_submit=True):
-                new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
-                submit_button = st.form_submit_button('Add Option')
-            
-                if submit_button and new_option:
-                    options.append(new_option)
-                    update_options(options)
-                    st.success('Option added successfully!')
-                    st.session_state.option_added = True
-
-            # Clear the text input field
-            st.session_state.new_option = ""
-        
-        else:
-            # Display the selected option
-            st.write(f"You selected: {selected_option}")
-        # create file uploader
-        uploaded_files = st.file_uploader("Browse or select formatted Distribution Grid excel sheets", type=["xlsx"], accept_multiple_files=True)
-
-# Process each uploaded file
-for uploaded_file in uploaded_files:
-    # Read Excel file into pandas ExcelFile object
-    excel_file = pd.ExcelFile(uploaded_file)
-
-    ## Get sheet names from ExcelFile object
-    sheet_names = excel_file.sheet_names
-
-    
-
-    # Display DataFrame for each sheet in Streamlit
-    for sheet_name in sheet_names:
-        df = pd.read_excel(excel_file, sheet_name=sheet_name)
-
-
-#===========================================================================================================
-# End of code to create code uploader in preparation to write to snowflake
-#==========================================================================================================
-
-
-
-
-def table_exists(conn, schema, table_name):
-    cursor = conn.cursor()
-    query = """
-    SELECT COUNT(*)
-    FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = %s
-    AND TABLE_NAME = %s
+        VALUES ({placeholders})
     """
-    cursor.execute(query, (schema, table_name))
-    result = cursor.fetchone()
-    cursor.close()
-    return result[0] > 0
+
+    # Create a cursor object
+    cursor = conn.cursor()
+
+    # Chunk the DataFrame into smaller batches
+    chunk_size = 5000  # Adjust the chunk size as per your needs
+    chunks = [df[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
+
+    # Execute the query with parameterized values for each chunk
+    for chunk in chunks:
+        cursor.executemany(insert_query, chunk.values.tolist())
+
+    # Log the start of the SQL activity
+    description = f"Completed {selected_option} Loading data into the Distro_Grid Table"
+    insert_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
 
 
+def call_procedure(conn):
+    try:
+        # Call the procedure
+        cursor = conn.cursor()
+        cursor.execute("CALL UPDATE_DISTRO_GRID()")
 
-import os
-import re
-
-# Process each uploaded file
-for uploaded_file in uploaded_files:
-    # Read Excel file into pandas ExcelFile object
-    excel_file = pd.ExcelFile(uploaded_file)
-
-    # Get the file name from the uploaded_file object
-    file_name = uploaded_file.name
-
-    # Extract the file name without the extension
-    file_name_without_extension = os.path.splitext(file_name)[0]
-    
-    # Print the file name without extension for debugging
-    print("File Name Without Extension:", file_name_without_extension)
-
-    # Use regular expression to extract the chain name from the file name
-    #store_name_match = re.search(r"formatted_(\w+\s+\w+)_spreadsheet", file_name_without_extension)
-
-    store_name_match = re.search(r"formatted_(\w+)_spreadsheet", file_name_without_extension)
-
-    print("Extracted Store Name:", store_name_match)
-    if store_name_match:
-        store_name = store_name_match.group(1)
-        
-    else:
-        # If the chain name cannot be extracted, assume it's not formatted correctly
-        st.warning(f"The file name '{file_name}' is not formatted correctly.")
-        continue
-
-    # Get sheet names from ExcelFile object
-    sheet_names = excel_file.sheet_names
-    print(file_name)
-
-    # Print the selected_option and chain_name
-    print(f"selected_option: {selected_option}")
-    print(f"store_name: {store_name}")        
-
-   
-
-    # Write DataFrame to Snowflake on button click
-    button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
-    if st.button("Import Distro Grid into Snowflake", key=button_key):
-        with st.spinner('Uploading data to Snowflake ...'):
-            # Create a table if it doesn't exist
-            table_name = "DISTRO_GRID"  # Replace with your table name
-            schema = "DATASETS"  # Replace with your schema name
-
-            # Write DataFrame to Snowflake based on the selected store
-            if selected_option == 'SAFEWAY':
-                upload_SAFEWAY_distro_grid_to_snowflake(df, schema,table_name,selected_option)
-            elif selected_option == 'FOOD MAXX':
-                upload_FOODMAXX_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-            
-            elif selected_option == "WHOLEFOODS":
-               upload_WHOLEFOODS_distro_grid_to_snowflake(df, schema, table_name, selected_option)    
-
-            elif selected_option == "LUCKY":
-                upload_LUCKYS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-                
-            elif selected_option == "WALMART":
-                upload_WALMART_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-            
-            elif selected_option == "RALEYS":
-                upload_RALEYS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-                        
-            elif selected_option == "SMART_FINAL":
-                upload_SMART_FINAL_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-            
-            elif selected_option == "SPROUTS":
-                upload_SPROUTS_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-           
-            elif selected_option == "TARGET":
-                upload_TARGET_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-            #
-            elif selected_option == "SAVE MART":
-                upload_SAVEMART_distro_grid_to_snowflake(df, schema, table_name, selected_option)
-            # Add more if-else statements for other stores as needed
-            else:
-            
-             # Inform the user that the selected chain does not match the file name
-               st.warning(f"The selected chain '{selected_option}' does not match the chain in the file name '{chain_name}'.")
-                
-               #formatted_workbook = workbook  # Use the original workbook
-
-        # Replace 'NAN' values with NULL
-        df = df.replace('NAN', np.nan).fillna(value='', method=None)
-
-        # Replace empty strings with None
-        df = df.replace('', None)
-
-        
+        # Fetch and print the result
+        result = cursor.fetchone()
+        print(result[0])  # Output: Update completed successfully.
+    except snowflake.connector.errors.ProgrammingError as e:
+        print(f"Error: {e}")
+    finally:
+        # Close the cursor and the connection to Snowflake
+        cursor.close()
+        conn.close()
 
 
-# def create_replace_distro_grid_table():
-    
-    
-#     # Get the current date and time
-#     current_date_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-#     # Define the table names
-#     backup_table_name = f"DISTRO_GRID_{current_date_time}"
-#     distro_grid_table_name = "DISTRO_GRID_testing"
-#     distro_grid_temp_table_name = "DISTRO_GRID_TEMP"
-    
-#     # Create a backup table with the current date and time
-#     create_backup_query = f"CREATE OR REPLACE TABLE {backup_table_name} AS SELECT * FROM {distro_grid_table_name};"
-    
-#     # Truncate the distro_grid table
-#     truncate_distro_grid_query = f"TRUNCATE TABLE {distro_grid_table_name};"
-    
-#     # Move data from distro_grid_temp to distro_grid
-#     move_data_query = f"INSERT INTO {distro_grid_table_name} SELECT * FROM {distro_grid_temp_table_name};"
-    
-#     # Truncate the distro_grid_temp table
-#     truncate_distro_grid_temp_query = f"TRUNCATE TABLE {distro_grid_temp_table_name};"
-    
-#     # Execute the queries
-#     cursor = conn.cursor()
-#     cursor.execute(create_backup_query)
-#     cursor.execute(truncate_distro_grid_query)
-#     cursor.execute(move_data_query)
-#     cursor.execute(truncate_distro_grid_temp_query)
-    
-#     # Update the metadata table
-#     metadata_table_name = "METADATA"  # Replace with your metadata table name
-#     status_query = f"""
-#     UPDATE {metadata_table_name}
-#     SET STATUS = CASE
-#         WHEN STATUS = 'ACTIVE' THEN 'ARCHIVE'
-#         ELSE 'ACTIVE'
-#     END
-#     WHERE TABLE_NAME = '{distro_grid_table_name}'
-#     """
-#     cursor.execute(status_query)
-    
-#     # Close the connection
-#     conn.close()
+def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback):
+    conn = create_snowflake_connection()[0]  # Get connection object
 
+    # Replace 'NAN' values with NULL
+    df = df.replace('NAN', np.nan).fillna(value='', method=None)
 
+    # Convert the "upc" column to numpy int64 data type, which supports larger integers
+    df['UPC'] = df['UPC'].astype(np.int64)
+
+    # Fill missing and non-numeric values in the "SKU" column with zeros
+    df['SKU'] = pd.to_numeric(df['SKU'], errors='coerce').fillna(0)
+
+    # Convert the "SKU" column to np.int64 data type, which supports larger integers
+    df['SKU'] = df['SKU'].astype(np.int64)
+
+    # Log the start of the SQL activity
+    user_id = getpass.getuser()
+    local_ip = get_local_ip()
+    description = f"Started {selected_option} Start Archive Process for distro_grid table"
+    insert_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
+
+    # Update spinner message for archive completion
+    update_spinner_callback(f"Starting {selected_option} Archive Process")
+
+    # Step 1: Fetch data for archiving
+    cursor_archive = conn.cursor()
+    cursor_archive.execute("SELECT * FROM DISTRO_GRID WHERE STORE_NAME = %s", (selected_option,))
+    data_to_archive = cursor_archive.fetchall()
+
+    # Step 2: Archive data
+    archive_data(conn, selected_option, data_to_archive)
+
+    # Update spinner message for archive completion
+    update_spinner_callback(f"Completed {selected_option} Archive Process")
+
+    # Step 3: Remove archived records from distro_grid table
+    remove_archived_records(conn, selected_option)
+
+    # Update spinner message for removal completion
+    update_spinner_callback(f"Completed {selected_option} Removal of Archive Records")
+
+    # Update spinner message for data loading completion
+    update_spinner_callback(f"Started Loading New Data into Distro_Grid Table for {selected_option}")
+
+    # Load new data into distro_grid table
+    load_data_into_distro_grid(conn, df, selected_option)
+
+    # Update spinner message for data loading completion
+    update_spinner_callback(f"Completed {selected_option} Loading Data into Distro_Grid Table")
+
+    update_spinner_callback(f"Starting Final Update to the Distro Grid for {selected_option}")
+
+    # Call procedure to update the distro Grid table with county and update the manufacturer and the product name
+    call_procedure(conn)
+
+    # Update spinner message for procedure completion
+    update_spinner_callback(f"Completed Final {selected_option} Update Procedure")
+    st.write("Data has been imported into Snowflake table: Distro_Grid")
