@@ -75,6 +75,15 @@ st.markdown("""
 # Add horizontal line
 st.markdown("<hr>", unsafe_allow_html=True)
 
+st.write("Download Template Here:")
+# Add a hyperlink to your GitHub repository
+
+
+# Your Streamlit app content
+
+# Add a download link for the Excel file
+st.markdown("[Download Pivot Table Template](https://github.com/rgriggs0072/ChainLinkAnalytics/raw/master/import_templates/RESET_SCHEDULE_TEMPLATE.xlsx)")
+
 # ===================================================================================================================
 
 # Create a container to hold the file uploader
