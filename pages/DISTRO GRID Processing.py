@@ -50,7 +50,7 @@ st.write("Download Template Here:")
 
 # Add a download link for the Excel file
 st.markdown("[Download Pivot Table Template](https://github.com/rgriggs0072/ChainLinkAnalytics/raw/master/import_templates/Pivot_Table_Distro_Grid_Template.xlsx)")
-st.markdown("[Download Distro Grid Template](https://github.com/rgriggs0072/ChainLinkAnalytics/raw/master/import_templates/Distro_Grid_Template.xlsx)")
+st.markdown("[Download Distro Grid Template](https://github.com/rgriggs0072/ChainLinkAnalytics/raw/master/import_templates/Distribution_Grid_Template.xlsx)")
 
 #==================================================================================================================
 
