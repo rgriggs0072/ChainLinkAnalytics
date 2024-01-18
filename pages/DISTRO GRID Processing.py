@@ -8,7 +8,6 @@ import snowflake.connector
 from Home import create_snowflake_connection  # Get connection object
 from DG_Pivot_Transform import format_pivot_table
 from DG_Non_Pivot_Format import format_non_pivot_table
-from Distro_Grid_Snowflake_Uploader import update_spinner, upload_distro_grid_to_snowflake
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
 # from streamlit_extras.app_logo import add_logo #can be removed
