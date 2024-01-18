@@ -20,18 +20,6 @@ from Home import create_snowflake_connection
 # from Home import log_connection_info
 from Home import log_error_info
 from Home import execute_query_and_close_connection
-
-# from Safeway_resetSH_format import format_SAFEWAY_Schedule
-# from Raleys_resetSH_format import format_RALEYS_Schedule
-# from Walmart_resetSH_format import format_WALMART_schedule
-
-# from FoodMaxx_resetSH_format import format_RESET_schedule
-
-# from Luckys_resetSH_format import format_LUCKYS_Schedule
-# from Savemart_resetSH_format import format_Savemart_Schedule
-# from Sprouts_resetSH_format import format_SPROUTS_Schedule
-# from Smart_Final_resetSH_format import format_SMARTFINAL_Schedule
-
 from Reset_Schedule_to_Snowflake_Uploader import upload_reset_data
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
@@ -82,7 +70,7 @@ st.write("Download Template Here:")
 # Your Streamlit app content
 
 # Add a download link for the Excel file
-st.markdown("[Download Pivot Table Template](https://github.com/rgriggs0072/ChainLinkAnalytics/raw/master/import_templates/RESET_SCHEDULE_TEMPLATE.xlsx)")
+st.markdown("[Download Rest Schedule Template Here:](https://github.com/rgriggs0072/ChainLinkAnalytics/raw/master/import_templates/RESET_SCHEDULE_TEMPLATE.xlsx)")
 
 # ===================================================================================================================
 
