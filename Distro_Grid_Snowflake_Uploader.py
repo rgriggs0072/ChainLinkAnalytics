@@ -184,6 +184,10 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     # Replace 'NAN' values with NULL
     df = df.replace('NAN', np.nan).fillna(value='', method=None)
     
+    # Remove trailing 'S' from UPCs
+    df['UPC'] = df['UPC'].str.rstrip('S')
+    
+    
     # Convert the "upc" column to numpy int64 data type, which supports larger integers
     df['UPC'] = df['UPC'].astype(np.int64)
     
