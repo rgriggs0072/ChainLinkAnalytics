@@ -184,8 +184,14 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     # Replace 'NAN' values with NULL
     df = df.replace('NAN', np.nan).fillna(value='', method=None)
     
-    # Remove trailing 'S' from UPCs
-    df['UPC'] = df['UPC'].str.rstrip('S')
+    # Convert 'UPC' column to lowercase and remove trailing 's'
+    df['UPC_original'] = df['UPC']  # Save original UPC values for comparison
+    df['UPC'] = df['UPC'].str.lower().str.rstrip('s')
+
+    # Print the rows where 'UPC' has changed
+    changed_upc = df[df['UPC_original'] != df['UPC']]
+    print("Rows where 'UPC' had 's' suffix removed:")
+    print(changed_upc[['UPC_original', 'UPC']])
     
     
     # Convert the "upc" column to numpy int64 data type, which supports larger integers
