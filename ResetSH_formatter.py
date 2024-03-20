@@ -101,7 +101,7 @@ def format_RESET_schedule(workbook):
     # Initialize a flag to check for an empty cell
     empty_cell_found = False
 
-    # Loop through all cells in Column K
+    # Loop through all cells in Column K (time)
     for cell in ws['K']:
         # Check if the cell has a value (not empty)
         if cell.value:
