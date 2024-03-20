@@ -15,7 +15,7 @@ import re
  
 def format_RESET_schedule(workbook):
     # Get the worksheet by name ('Sheet1')
-    ws = workbook['RESET_SCHEDDULE_TEMPLATE']
+    ws = workbook['RESET_SCHEDULE_TEMPLATE']
     
     
 
