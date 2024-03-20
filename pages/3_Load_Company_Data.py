@@ -459,7 +459,7 @@ if uploaded_file:
     #st.dataframe(df)
 
     # write DataFrame Customers to Snowflake Customers Table on button click
-    if st.button("Import into Snowflake"):
+    if st.button("Import into Snowflake", key="Import_snowflk"):
         with st.spinner('Uploading Customers data to Snowflake ...'):
             write_to_customers_snowflake(df)
             st.write("Customer Data has been imported into Snowflake table! ", "Customers")
@@ -494,7 +494,7 @@ if uploaded_file is not None:
     workbook = openpyxl.load_workbook(uploaded_file)
 
     # Show the Reformat button
-    if st.button("Reformat_Products"):
+    if st.button("Reformat_Products", key="reformat_products_button"):
         # Format the sales report
         new_workbook = format_Products_Dataload(workbook)
 
