@@ -15,14 +15,14 @@ import re
  
 def format_RESET_schedule(workbook):
     # Get the worksheet by name ('Sheet1')
-    ws = workbook['Sheet1']
+    ws = workbook['RESET_SCHEDDULE_TEMPLATE']
     
     
 
-    # Fill column A with "CHAIN NAME SELECTED" starting from row 2
-    for row in ws.iter_rows(min_row=2, min_col=1, max_col=1):
-        for cell in row:
-            cell.value = "FOOD MAXX"
+    # # Fill column A with "CHAIN NAME SELECTED" starting from row 2
+    # for row in ws.iter_rows(min_row=2, min_col=1, max_col=1):
+    #     for cell in row:
+    #         cell.value = "FOOD MAXX"
 
     # Format column J as date "mm/dd/yyyy"
     date_format = NamedStyle(name='date_format', number_format='mm/dd/yyyy')
