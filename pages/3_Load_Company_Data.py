@@ -535,7 +535,7 @@ if uploaded_file:
 
 
     # write DataFrame to Snowflake on button click
-    if st.button("Import into Snowflake"):
+    if st.button("Import into Snowflake", key="import_button"):
         with st.spinner('Uploading product data to Snowflake ...'):
             write_to_products_snowflake(df)
             st.write("Product Data has been imported into Snowflake table! ", "Products")
@@ -664,7 +664,7 @@ with file_container:
     # Display the formatted DataFrame
     if uploaded_file is not None:
         # Show the Reformat button
-        if st.button("Reformat Supplier by County Spreadsheet"):
+        if st.button("Reformat Supplier by County Spreadsheet", key="reformat_button"):
             # Format the Supplier BY COUNTY excel spreadsheet
             file_content = uploaded_file.getvalue()  # Get the content of the uploaded file
             df_formatted = format_supplier_by_county(file_content)
@@ -694,7 +694,7 @@ uploaded_file_snowflake = st.file_uploader(":red[Upload formatted Supplier by Co
 
 if uploaded_file_snowflake is not None:
     # Show the Write to Snowflake button
-    if st.button("Write Supplier by County Data to Snowflake"):
+    if st.button("Write Supplier by County Data to Snowflake", key="supplier_county_button"):
         # Read the content of the uploaded file into a DataFrame
         df_uploaded = pd.read_excel(uploaded_file_snowflake)
 
