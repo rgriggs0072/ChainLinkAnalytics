@@ -95,6 +95,7 @@ def format_non_pivot_table(workbook, stream):
             missing_columns_str = ", ".join(missing_columns)
             rows_with_missing_values.append(f"Row {index + 1}: {missing_columns_str}")
 
+
     # Display warnings in a modal-like section
     if rows_with_missing_values:
         with st.expander("Warning! Missing Values Detected", expanded=True):
