@@ -88,7 +88,7 @@ def fetch_product_analysis_data():
         UPC,
         _COUNT AS ProductCount
     FROM
-        PRODUCT_ANALYSIS;  -- Remove database and schema here
+        PRODUCT_ANALYSIS;  
     """
     cursor = conn.cursor()
     cursor.execute(sql_query)

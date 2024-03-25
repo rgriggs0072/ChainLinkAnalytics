@@ -183,18 +183,19 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     
     # Replace 'NAN' values with NULL
     df = df.replace('NAN', np.nan).fillna(value='', method=None)
+    #Remove 'S' from the 'UPC' column
+    #df['UPC'] = df['UPC'].str.replace('S', '')
+    # Remove 'S' from the end of UPC
+    #df['UPC'] = df['UPC'].str.replace('S$', '', regex=True)
     
-    # Convert 'UPC' column to lowercase and remove trailing 's'
-    df['UPC_original'] = df['UPC']  # Save original UPC values for comparison
-    df['UPC'] = df['UPC'].str.lower().str.rstrip('s')
+    
+    # Remove 'S' from the end of UPC if it exists
+    df['UPC'] = df['UPC'].apply(lambda x: str(x)[:-1] if str(x).endswith('S') else x)
 
-    # Print the rows where 'UPC' has changed
-    changed_upc = df[df['UPC_original'] != df['UPC']]
-    print("Rows where 'UPC' had 's' suffix removed:")
-    print(changed_upc[['UPC_original', 'UPC']])
-    
-    
-    # Convert the "upc" column to numpy int64 data type, which supports larger integers
+
+    st.write(df)
+
+    # Convert 'UPC' column to np.int64
     df['UPC'] = df['UPC'].astype(np.int64)
     
     # Fill missing and non-numeric values in the "SKU" column with zeros
@@ -203,6 +204,8 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     # Convert the "SKU" column to np.int64 data type, which supports larger integers
     df['SKU'] = df['SKU'].astype(np.int64)
     
+    
+
     # Log the start of the SQL activity
     user_id = getpass.getuser()
     local_ip = get_local_ip()
