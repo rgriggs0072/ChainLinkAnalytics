@@ -312,15 +312,15 @@ execute_query_and_close_connection(initial_query, conn, connection_id)
 def display_execution_summary():
     # Your query
     query = "SELECT SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM GAP_REPORT;"
-
-    # Create a connection using function create_snowflake_connection()
+    
+    # Create a connection
     conn, connection_id = create_snowflake_connection()
 
-    # Execute the query and get the result from the function execute_query_and_close_connection(query, conn, connection_id) passing the query
-    # the connction information and the connection_id
+    
+    # Execute the query and get the result
     result = execute_query_and_close_connection(query, conn, connection_id)
-
-    # Process the results from above to display the results
+    #st.write(result)
+    # Process the result as neededr
     df = pd.DataFrame(result, columns=["TOTAL_IN_SCHEMATIC", "PURCHASED", "PURCHASED_PERCENTAGE"])
 
     total_gaps = df['TOTAL_IN_SCHEMATIC'].iloc[0] - df['PURCHASED'].iloc[0]
@@ -331,8 +331,6 @@ def display_execution_summary():
     # df = df.sort_values(by="TOTAL_IN_SCHEMATIC", ascending=False)
 
     return df['TOTAL_IN_SCHEMATIC'].iloc[0], df['PURCHASED'].iloc[0], total_gaps, formatted_percentage
-
-
 # ===========================================================================================================================================
 # End Block for Function that will connect to DB and pull data to display the Execution Summary Data in Row 1 column 1
 # ===========================================================================================================================================

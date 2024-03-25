@@ -1,7 +1,8 @@
-# Import required libraries
+﻿# Import required libraries
 from cgitb import text
 from pickle import TRUE
 from this import s
+from typing import ChainMap
 import snowflake.connector
 import streamlit as st
 import pandas as pd
@@ -55,6 +56,9 @@ st.markdown("""
 
 # Add horizontal line
 st.markdown("<hr>", unsafe_allow_html=True)
+
+
+
 
 
 # ================================================================================================================================================
@@ -263,7 +267,7 @@ if uploaded_file:
 # =====================================================================================================
 
 
-def create_gap_report(conn, salesperson, store, supplier):
+def create_gap_report(conn, salesperson, chain, supplier):
     """
     Retrieves data from a Snowflake view and creates a button to download the data as a CSV report.
     """
@@ -275,12 +279,12 @@ def create_gap_report(conn, salesperson, store, supplier):
     # Execute SQL query and retrieve data from the Gap_Report view with filters
     if salesperson != "All":
         query = f"SELECT * FROM Gap_Report WHERE SALESPERSON = '{salesperson}'"
-        if store != "All":
-            query += f" AND STORE_NAME = '{store}'"
+        if chain != "All":
+            query += f" AND CHAIN_NAME = '{chain}'"
             if supplier != "All":
                 query += f" AND SUPPLIER = '{supplier}'"
-    elif store != "All":
-        query = f"SELECT * FROM Gap_Report WHERE STORE_NAME = '{store}'"
+    elif chain != "All":
+        query = f"SELECT * FROM Gap_Report WHERE CHAIN_NAME = '{chain}'"
         if supplier != "All":
             query += f" AND SUPPLIER = '{supplier}'"
     else:
@@ -321,14 +325,14 @@ conn, connection_id = create_snowflake_connection()
 # Retrieve salesperson, store, and supplier data from tables
 salesperson_options = ["All"] + pd.read_sql("SELECT DISTINCT SALESPERSON FROM Salesperson", conn)[
     'SALESPERSON'].tolist()
-store_options = ["All"] + pd.read_sql("SELECT DISTINCT STORE_NAME FROM CUSTOMERS", conn)['STORE_NAME'].tolist()
+chain_options = ["All"] + pd.read_sql("SELECT DISTINCT CHAIN_NAME FROM CUSTOMERS", conn)['CHAIN_NAME'].tolist()
 supplier_options = ["All"] + pd.read_sql("SELECT DISTINCT SUPPLIER FROM SUPPLIER_COUNTY", conn)['SUPPLIER'].tolist()
 
 #  Create a form in the sidebar
 with st.sidebar.form(key="Gap Report Report", clear_on_submit=True):
     # Select boxes for filters
     salesperson = st.selectbox("Filter by Salesperson", salesperson_options)
-    store = st.selectbox("Filter by Chain", store_options)
+    chain = st.selectbox("Filter by Chain", chain_options)
     supplier = st.selectbox("Filter by Supplier", supplier_options)
 
     # Submit button
@@ -350,7 +354,7 @@ with st.sidebar:
     # Call create_gap_report if form is submitted
     if submitted:
         with st.spinner('Generating report...'):
-            temp_file_path = create_gap_report(conn, salesperson=salesperson, store=store, supplier=supplier)
+            temp_file_path = create_gap_report(conn, salesperson=salesperson, chain=chain, supplier=supplier)
             with open(temp_file_path, 'rb') as f:
                 bytes_data = f.read()
             today = datetime.datetime.today().strftime('%Y-%m-%d')  # get current date in YYYY-MM-DD format

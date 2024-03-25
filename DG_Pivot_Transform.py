@@ -41,10 +41,12 @@ def format_pivot_table(workbook):
     #st.write(df_melted.columns)
 
     # Replace 1 with a green checkmark and NaN with a red X
-    #df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if x == 1 else ('No' if pd.isna(x) else '*'))
-    df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if str(x).strip() == '1' else ('No' if str(x).strip().lower() == 'no' else 'No'))
+    df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if x == 1 else ('No' if pd.isna(x) else '*'))
+    #df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if str(x).strip() == '1' else ('No' if str(x).strip().lower() == 'no' else 'No'))
+    # Replace 1 with 'Yes' and NaN with 'No'
+    #df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if x == '1' else ('No' if pd.isna(x) else 'No'))
 
-    #df_melted['Yes/No'] = df_melted['Yes/No'].apply(lambda x: 'Yes' if str(x).strip() == '1' else ('No' if str(x).strip().lower() == 'No' else 'No'))
+    
 
 
 
@@ -97,7 +99,7 @@ def format_pivot_table(workbook):
     #df_melted.loc[0:, "STORE_NAME"] = "FOOD MAXX"
 
     # Fill SKU column with 0 starting from row 2
-    df_melted.loc[0:, "SKU"] = 0
+    #df_melted.loc[0:, "SKU"] = 0
     #st.write(df_melted)
     df_melted.loc[0:,"ACTIVATION_STATUS"] =""
     df_melted.loc[0:,"COUNTY"] =""
