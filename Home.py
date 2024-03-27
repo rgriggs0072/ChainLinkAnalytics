@@ -908,3 +908,52 @@ with row2_col2:
     # call the function in check_and_process_data in Streamlit
     if st.button("Process Gap Pivot Data", key='process_gap_pivot'):
         check_and_process_data()
+
+
+# def fetch_top_products_by_store():
+#     query = "SELECT * FROM TOP_SELLING_PRODUCTS"
+    
+#     # Create a connection
+#     conn, connection_id = create_snowflake_connection()
+    
+#     try:
+#         # Open a cursor, execute the query and fetch the results
+#         cur = conn.cursor()
+#         cur.execute(query)
+#         result = cur.fetchall()  # Fetch all results
+#     finally:
+#         cur.close()  # Close the cursor
+#         conn.close()  # Close the connection
+
+#     return result
+
+
+
+# import matplotlib.pyplot as plt
+
+
+
+# def plot_results(results):
+#     stores = [result[1] for result in results]  # Assuming the second element is sales figure
+#     products = [result[0] for result in results]  # Assuming the first element is product name
+    
+    
+#     plt.figure(figsize=(10, 6))
+#     plt.bar(products, stores, color='skyblue')
+#     plt.ylabel('Products')
+#     plt.xlabel('Stores')
+#     plt.title('Top Selling Products by Store')
+#     plt.xticks(rotation=45)
+    
+#     # Display the plot in the Streamlit app
+#     st.pyplot(plt)
+
+# # Assuming fetch_top_products_by_store() is defined elsewhere and returns data correctly
+# top_products = fetch_top_products_by_store()
+
+# # Using Streamlit to layout and display the plot
+# st.title('Sales Data Visualization')
+# row4_col1 = st.columns(1)  # Creates a single column layout
+
+# with row4_col1[0]:  # Using the first (and only) column in the layout
+#     plot_results(top_products)

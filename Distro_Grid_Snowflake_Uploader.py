@@ -12,6 +12,9 @@ from Home import create_snowflake_connection
 
 
 
+
+
+
 def current_timestamp():
     return datetime.now()
 
@@ -117,7 +120,7 @@ def archive_data(conn, selected_option, data_to_archive):
 
 def remove_archived_records(conn, selected_option):
     cursor_to_remove = conn.cursor()
-    delete_query = "DELETE FROM DISTRO_GRID WHERE STORE_NAME = %s"
+    delete_query = "DELETE FROM DISTRO_GRID WHERE CHAIN_NAME = %s"
     
     # Execute the delete query with the selected option (store_name)
     cursor_to_remove.execute(delete_query, (selected_option,))
@@ -218,7 +221,7 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     
     # Step 1: Fetch data for archiving
     cursor_archive = conn.cursor()
-    cursor_archive.execute("SELECT * FROM DISTRO_GRID WHERE STORE_NAME = %s", (selected_option,))
+    cursor_archive.execute("SELECT * FROM DISTRO_GRID WHERE CHAIN_NAME = %s", (selected_option,))
     data_to_archive = cursor_archive.fetchall()
     
     # Step 2: Archive data

@@ -16,13 +16,15 @@ import datetime
 from PIL import Image
 from openpyxl import load_workbook
 
+st.set_page_config(layout="wide")
+
 
 # ==================================================================================================================
 
 # THIS SECTION OF CODE HANDLES THE LOGO AND SETS THE VIEW TO WIDE 
 
 # ==================================================================================================================
-st.set_page_config(layout="wide")
+
 
 
 def add_logo(logo_path, width, height):
