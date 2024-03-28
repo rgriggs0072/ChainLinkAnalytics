@@ -196,7 +196,7 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     df['UPC'] = df['UPC'].apply(lambda x: str(x)[:-1] if str(x).endswith('S') else x)
 
 
-    st.write(df)
+    #st.write(df)
 
     # Convert 'UPC' column to np.int64
     df['UPC'] = df['UPC'].astype(np.int64)
@@ -234,7 +234,7 @@ def upload_distro_grid_to_snowflake(df, selected_option, update_spinner_callback
     remove_archived_records(conn, selected_option)
     
     # Update spinner message for removal completion
-    update_spinner_callback(f"Completed {selected_option} Removal of Archive Records")
+    update_spinner_callback(f"Completed {selected_option} Removal of Archived Records")
     
    # Update spinner message for data loading completion
     update_spinner_callback(f"Started Loading New Data into Distro_Grid Table for {selected_option}")
