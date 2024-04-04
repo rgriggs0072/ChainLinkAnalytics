@@ -352,10 +352,10 @@ salesperson_options = ["All"] + pd.read_sql("SELECT DISTINCT SALESPERSON FROM Sa
 store_options = ["All"] + pd.read_sql("SELECT DISTINCT CHAIN_NAME FROM CUSTOMERS", conn)['CHAIN_NAME'].tolist()
 supplier_options = ["All"]+ pd.read_sql("SELECT DISTINCT SUPPLIER FROM SUPPLIER_COUNTY", conn)['SUPPLIER'].tolist()
 
-# Sort the options alphabetically
-salesperson_options.sort()
-store_options.sort()
-supplier_options.sort()
+# # Sort the options alphabetically
+# salesperson_options.sort()
+# store_options.sort()
+# supplier_options.sort()
 
 #  Create a form in the sidebar
 with st.sidebar.form(key="Gap Report Report", clear_on_submit=True):
