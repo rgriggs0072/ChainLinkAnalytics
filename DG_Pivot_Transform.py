@@ -94,6 +94,9 @@ def format_pivot_table(workbook):
 
     # Remove ' and , characters from all columns
     df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1', 'No': '0'}, regex=True)
+    
+    # Remove '-' character from the UPC column
+    df_melted['UPC'] = df_melted['UPC'].str.replace('-', '')
   
     # Fill STORE_NAME column with "FOOD MAXX" starting from row 2
     #df_melted.loc[0:, "STORE_NAME"] = "FOOD MAXX"
