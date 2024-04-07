@@ -12,27 +12,7 @@ def current_timestamp():
     return datetime.now()
 
 
-# ====================================================================================================================
-# CREATE CONNECTION TO SNOWFLAKE
-# ====================================================================================================================
 
-
-# # Load Snowflake credentials from the secrets.toml file
-# snowflake_creds = st.secrets["snowflake"]
-
-# # Establish a new connection to Snowflake
-# conn = snowflake.connector.connect(
-#     account=snowflake_creds["account"],
-#     user=snowflake_creds["user"],
-#     password=snowflake_creds["password"],
-#     warehouse=snowflake_creds["warehouse"],
-#     database=snowflake_creds["database"],
-#     schema=snowflake_creds["schema"]
-# )
-
-# ====================================================================================================================
-# End CREATE CONNECTION TO SNOWFLAKE
-# ====================================================================================================================
 
 # --------------------------------------------------------------------------------------------------------------------
 
@@ -122,25 +102,7 @@ def upload_reset_data(df, selected_chain):
                 # Load Snowflake credentials from the secrets.toml file
                 conn, connection_id = create_snowflake_connection()
 
-                # # Load Snowflake credentials from the secrets.toml file
-                # snowflake_creds = st.secrets["snowflake"]
-                # #st.write('You have selected: ', selected_store)
-
-                # # Use the schema from the secrets.toml
-                # schema = snowflake_creds.get("schema")
-
-                # if schema is None:
-                #     raise ValueError("Schema not found in secrets.toml")
-
-                # # Establish a new connection to Snowflake
-                # conn = snowflake.connector.connect(
-                #     account=snowflake_creds["account"],
-                #     user=snowflake_creds["user"],
-                #     password=snowflake_creds["password"],
-                #     warehouse=snowflake_creds["warehouse"],
-                #     database=snowflake_creds["database"],
-                #     schema=snowflake_creds["schema"]
-                # )
+                
 
                 # Get User ID and local ip address to write to log
                 user_id = getpass.getuser()
@@ -156,9 +118,9 @@ def upload_reset_data(df, selected_chain):
 
                 # Remove data from the table where STORE_NAME is equal to selected_store
                 remove_query = f"""
-            DELETE FROM RESET_SCHEDULE
-            WHERE CHAIN_NAME = '{selected_chain}'
-            """
+                DELETE FROM RESET_SCHEDULE
+                WHERE CHAIN_NAME = '{selected_chain}'
+                """
 
                 # Log the completion of the SQL activity
                 description = f"Completed {selected_option} delete from reset table"
