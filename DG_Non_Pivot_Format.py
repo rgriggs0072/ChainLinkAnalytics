@@ -68,7 +68,7 @@ import pandas as pd
 import pandas as pd
 import streamlit as st
 
-def format_non_pivot_table(workbook, stream):
+def format_non_pivot_table(workbook, stream, selected_option):
     # Convert the worksheet to a DataFrame
     df = pd.DataFrame(workbook.active.values)
 

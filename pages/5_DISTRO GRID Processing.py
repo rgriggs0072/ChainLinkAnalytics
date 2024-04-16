@@ -142,7 +142,10 @@ else:
     with file_container:
         selected_option = st.selectbox(':red[Select the Chain Distro Grid to format]', options + ['Add new option...'],
                                        key="existing_option")
-
+        
+    # Update session state whenever the selected option changes
+    st.session_state.selected_option = selected_option
+       
         # Check if the selected option is missing and allow the user to add it
 if selected_option == 'Add new option...':
     st.write("You selected: Add new option...")
@@ -203,11 +206,11 @@ with st.container():
 
                 if user_selection == "Yes":
                     # Process the uploaded file before using it
-                    formatted_workbook = format_pivot_table(workbook)
+                    formatted_workbook = format_pivot_table(workbook, st.session_state.selected_option)
                     st.success("Pivot table formatted successfully.")
                 elif user_selection == "No":
                     # Call your non-pivot formatting function here
-                    formatted_workbook = format_non_pivot_table(workbook, stream)
+                    formatted_workbook = format_non_pivot_table(workbook, stream, st.session_state.selected_option)
 
                     # If no warnings are detected, manually set acknowledged_warnings to True
                     if not st.session_state.get('warnings_present', False):
