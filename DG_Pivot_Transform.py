@@ -17,7 +17,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 #====================================================================================================================================================
 
 
-def format_pivot_table(workbook):
+def format_pivot_table(workbook, selected_option):
       # Assuming the sheet name is 'Sheet1', you can modify it as per your actual sheet name
     sheet = workbook['Sheet1']
 
@@ -95,19 +95,42 @@ def format_pivot_table(workbook):
     # Remove ' and , characters from all columns
     df_melted = df_melted.replace({'\'': '', ',': '', '\*': '', 'Yes': '1', 'No': '0'}, regex=True)
     
-    # Remove '-' character from the UPC column
-    df_melted['UPC'] = df_melted['UPC'].str.replace('-', '')
+    # Convert UPC entries to string, remove hyphens, and attempt to convert back to numbers
+    df_melted['UPC'] = df_melted['UPC'].astype(str).str.replace('-', '', regex=True)
+    temp_numeric_upc = pd.to_numeric(df_melted['UPC'], errors='coerce')  # Temporary numeric conversion for validation
+
+    # Identify rows where UPC conversion failed using the temporary conversion data
+    invalid_upc_rows = df_melted[temp_numeric_upc.isna()]
+
+    if not invalid_upc_rows.empty:
+        # Display an error and log the problematic rows
+        st.error("Some UPC values could not be converted to numeric and may contain invalid characters or are empty. Please correct these in the original sheet and try uploading again.")
+        st.dataframe(invalid_upc_rows[['UPC']])
+        # Optionally, provide indices or additional info to help users locate the problem in their file
+        st.write("Problematic row indices:", invalid_upc_rows.index.tolist())
+        st.stop()  # Use this to stop further execution of the script
+
+    # Since no issues, update UPC with its numeric version
+    df_melted['UPC'] = temp_numeric_upc
+    
+    # # Convert UPC column to string
+    # df_melted['UPC'] = df_melted['UPC'].astype(str)
+    
+    # # Remove '-' character from the UPC column
+    # df_melted['UPC'] = df_melted['UPC'].str.replace('-', '')
+    
+
   
     # Fill STORE_NAME column with "FOOD MAXX" starting from row 2
-    #df_melted.loc[0:, "STORE_NAME"] = "FOOD MAXX"
+    df_melted.loc[0:, "STORE_NAME"] = st.session_state.selected_option
 
     # Fill SKU column with 0 starting from row 2
-    #df_melted.loc[0:, "SKU"] = 0
+    df_melted.loc[0:, "SKU"] = 0
     #st.write(df_melted)
     df_melted.loc[0:,"ACTIVATION_STATUS"] =""
     df_melted.loc[0:,"COUNTY"] =""
     # Fill CHAIN_NAME column with "FOOD MAXX" starting from row 2
-    df_melted.loc[0:, "CHAIN_NAME"] = ""
+    df_melted.loc[0:, "CHAIN_NAME"] = st.session_state.selected_option
     #st.write(df_melted)
 
     
