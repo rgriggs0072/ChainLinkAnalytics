@@ -349,7 +349,7 @@ def fetch_chain_schematic_data():
     # Load Snowflake credentials from the secrets.toml file
 
     # Fetch data for the bar chart (modify the query to match your view)
-    query = "SELECT CHAIN_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM gap_report GROUP BY CHAIN_NAME;"
+    query = "SELECT STORE_NAME, SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM gap_report GROUP BY STORE_NAME;"
 
     # Create a connection
     conn, connection_id = create_snowflake_connection()
