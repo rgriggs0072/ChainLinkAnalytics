@@ -18,7 +18,7 @@ from openpyxl import load_workbook
 
 
 # ==================================================================================================================
-# THIS SECTION OF CODE HANDLES THE LOGO AND SETS THE VIEW TO WIDE 
+# THIS SECTION OF CODE HANDLES THE LOGO AND SETS THE VIEW TO WIDE
 # ==================================================================================================================
 
 def add_logo(logo_path, width, height):
@@ -163,37 +163,84 @@ if uploaded_file:
             #     st.session_state['file_uploader'] = None  # Clear the file uploader
             #     print("what the hell is the file session state? ", st.session_state['uploaded_file'])
             #     st.rerun()
-            # st.write("do we have a session state damn it?",st.session_state['file_uploaded'] )                   
+            # st.write("do we have a session state damn it?",st.session_state['file_uploaded'] )
 
-# ======================================================================================================================
-# CREATE FILE UPLOADER IN PREPARATION TO WRITE TO SNOWFLAKE
-# ======================================================================================================================
+# ===========================================================================================================
+# create code uploader in preparation to write to snowflake
+# ==========================================================================================================
 
+# Create a container to hold the file uploader
 snowflake_file_container = st.container()
+
+# Add a title to the container
 with snowflake_file_container:
     st.markdown("<hr>", unsafe_allow_html=True)
     st.subheader(":blue[Write Distribution Grid to Snowflake Utility]")
 
-conn = create_snowflake_connection()[0]
+with snowflake_file_container:
+    conn = create_snowflake_connection()[0]  # Get connection object
 
-uploaded_files = st.file_uploader("Browse or select formatted Distribution Grid excel sheets", type=["xlsx"], accept_multiple_files=True)
+# Initialize session state variables
+if 'new_option' not in st.session_state:
+    st.session_state.new_option = ""
+if 'option_added' not in st.session_state:
+    st.session_state.option_added = False
 
-# Process each uploaded file and prepare for Snowflake upload
+# Check if options are available
+if not options:
+    st.warning("No options available. Please add options to the list.")
+else:
+    # Create the dropdown in Streamlit
+
+    selected_option = st.selectbox(':red[Select the Chain Distro Grid to upload to Snowflake]',
+                                   options + ['Add new option...'], key="existing_chain_option")
+
+    # Check if the selected option is missing and allow the user to add it
+    if selected_option == 'Add new option...':
+        st.write("You selected: Add new option...")
+
+        # Show the form to add a new option
+        with st.form(key='add_option_form', clear_on_submit=True):
+            new_option = st.text_input('Enter the new option', value=st.session_state.new_option)
+            submit_button = st.form_submit_button('Add Option')
+
+            if submit_button and new_option:
+                options.append(new_option)
+                update_options(options)
+                st.success('Option added successfully!')
+                st.session_state.option_added = True
+
+        # Clear the text input field
+        st.session_state.new_option = ""
+
+    else:
+        # Display the selected option
+        st.write(f"You selected: {selected_option}")
+    # create file uploader
+    uploaded_files = st.file_uploader("Browse or select formatted Distribution Grid excel sheets", type=["xlsx"],
+                                      accept_multiple_files=True)
+
+# Process each uploaded file
 for uploaded_file in uploaded_files:
+    # Read Excel file into pandas ExcelFile object
     excel_file = pd.ExcelFile(uploaded_file)
+
+    ## Get sheet names from ExcelFile object
     sheet_names = excel_file.sheet_names
 
+    # Display DataFrame for each sheet in Streamlit
     for sheet_name in sheet_names:
         df = pd.read_excel(excel_file, sheet_name=sheet_name)
-        button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
-        if st.button("Import Distro Grid into Snowflake", key=button_key):
-            with st.spinner('Uploading data to Snowflake ...'):
-                upload_distro_grid_to_snowflake(df, selected_option, update_spinner)
 
+    # #===========================================================================================================
+    # End of code to create code uploader in preparation to write to snowflake
+    # ==========================================================================================================
 
+    # Write DataFrame to Snowflake on button click
+    button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
+    if st.button("Import Distro Grid into Snowflake", key=button_key):
+        with st.spinner('Uploading data to Snowflake ...'):
+            # Write DataFrame to Snowflake based on the selected store
 
-
-
-
-
+            upload_distro_grid_to_snowflake(df, selected_option, update_spinner)
 
