@@ -1,6 +1,8 @@
 # Import required libraries
 from cgitb import text
+from itertools import chain
 from pickle import TRUE
+from ssl import CHANNEL_BINDING_TYPES
 from this import s
 import snowflake.connector
 import streamlit as st
@@ -283,7 +285,7 @@ if uploaded_file:
 
 
 
-def create_gap_report(conn, salesperson, store, supplier):
+def create_gap_report(conn, salesperson, chain_name, supplier):
     """
     Retrieves data from a Snowflake view and creates a button to download the data as a CSV report.
     """
@@ -295,12 +297,12 @@ def create_gap_report(conn, salesperson, store, supplier):
     # Execute SQL query and retrieve data from the Gap_Report view with filters
     if salesperson != "All":
         query = f"SELECT * FROM Gap_Report WHERE SALESPERSON = '{salesperson}'"
-        if store != "All":
-            query += f" AND STORE_NAME = '{store}'"
+        if chain_name != "All":
+            query += f" AND CHAIN NAME = '{chain_name}'"
             if supplier != "All":
                 query += f" AND SUPPLIER = '{supplier}'"
-    elif store != "All":
-        query = f"SELECT * FROM Gap_Report WHERE STORE_NAME = '{store}'"
+    elif chain_name != "All":
+        query = f"SELECT * FROM Gap_Report WHERE CHAIN_NAME = '{chain_name}'"
         if supplier != "All":
             query += f" AND SUPPLIER = '{supplier}'"
     else:
@@ -349,17 +351,17 @@ conn = snowflake.connector.connect(
 
 # Retrieve options from the database
 salesperson_options = pd.read_sql("SELECT DISTINCT SALESPERSON FROM Salesperson", conn)['SALESPERSON'].tolist()
-store_options = pd.read_sql("SELECT DISTINCT CHAIN_NAME FROM CUSTOMERS", conn)['CHAIN_NAME'].tolist()
+chain_options = pd.read_sql("SELECT DISTINCT CHAIN_NAME FROM CUSTOMERS", conn)['CHAIN_NAME'].tolist()
 supplier_options = pd.read_sql("SELECT DISTINCT SUPPLIER FROM SUPPLIER_COUNTY", conn)['SUPPLIER'].tolist()
 
 # Sort the options alphabetically
 salesperson_options.sort()
-store_options.sort()
+chain_options.sort()
 supplier_options.sort()
 
 # Add "All" at the beginning of each list
 salesperson_options.insert(0, "All")
-store_options.insert(0, "All")
+chain_options.insert(0, "All")
 supplier_options.insert(0, "All")
 
 
@@ -367,7 +369,7 @@ supplier_options.insert(0, "All")
 with st.sidebar.form(key="Gap Report Report", clear_on_submit=True):
     # Select boxes for filters
     salesperson = st.selectbox("Filter by Salesperson", salesperson_options)
-    store = st.selectbox("Filter by Chain", store_options)
+    chain_name = st.selectbox("Filter by Chain Name", chain_options)
     supplier = st.selectbox("Filter by Supplier", supplier_options)
 
     # Submit button
@@ -383,7 +385,7 @@ with st.sidebar:
    # Call create_gap_report if form is submitted
    if submitted:
         with st.spinner('Generating report...'):
-            temp_file_path = create_gap_report(conn, salesperson=salesperson, store=store, supplier=supplier)
+            temp_file_path = create_gap_report(conn, salesperson=salesperson, chain_name=chain_name, supplier=supplier)
             with open(temp_file_path, 'rb') as f:
                 bytes_data = f.read()
             today = datetime.datetime.today().strftime('%Y-%m-%d') # get current date in YYYY-MM-DD format
