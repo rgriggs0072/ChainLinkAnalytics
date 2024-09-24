@@ -72,12 +72,22 @@ def format_non_pivot_table(workbook, stream, selected_option):
     # Convert the worksheet to a DataFrame
     df = pd.DataFrame(workbook.active.values)
 
-    # Initialize list to collect rows with missing values
+    # Initialize lists to collect rows with issues
     rows_with_missing_values = []
+    rows_with_apostrophe_issues = []
 
-    # Iterate over each row to check for missing values in specific columns
+    # Unicode representation of the smart quote
+    smart_quote = "\u2019"
+
+    # Iterate over each row to check for missing values and apostrophes in specific columns
     for index, row in df.iterrows():
         missing_columns = []
+        store_name = str(row[0])  # Assuming store name is in the first column
+
+        # Normalize the store name by replacing apostrophes and smart quotes
+        normalized_store_name = store_name.replace("'", "").replace(smart_quote, "")
+
+        # Check for missing values
         for col_idx, value in enumerate(row):
             if pd.isna(value):
                 column_name = None
@@ -91,36 +101,41 @@ def format_non_pivot_table(workbook, stream, selected_option):
                 if column_name:
                     missing_columns.append(column_name)
 
+        # Check for apostrophes or smart quotes in the store name
+        if "'" in store_name or smart_quote in store_name:
+            rows_with_apostrophe_issues.append(f"Row {index + 1}: STORE NAME contains an apostrophe or smart quote - {store_name}")
+
         if missing_columns:
             missing_columns_str = ", ".join(missing_columns)
             rows_with_missing_values.append(f"Row {index + 1}: {missing_columns_str}")
 
+    # Set session state flags based on the warnings
+    st.session_state['warnings_present'] = bool(rows_with_missing_values or rows_with_apostrophe_issues)
 
-    # Display warnings in a modal-like section
+    # Display warnings for missing values
     if rows_with_missing_values:
         with st.expander("Warning! Missing Values Detected", expanded=True):
             for warning in rows_with_missing_values:
-                # Use st.error to make the warning messages red
                 st.error(warning)
-            
-            if st.button("Acknowledge and Continue", key="acknowledge_warnings"):
-                # This could reset a session state variable or perform some action to acknowledge the warnings
-                st.session_state['acknowledged_warnings'] = True
-                # Optionally rerun the app to refresh the state after acknowledgment
-                st.experimental_rerun()
 
-    # If everything is valid, you can continue processing the workbook
+    # Display warnings for store names with apostrophes
+    if rows_with_apostrophe_issues:
+        with st.expander("Warning! Store Names with Apostrophes Detected", expanded=True):
+            for warning in rows_with_apostrophe_issues:
+                st.error(warning)
+
+    # Display an "Acknowledge and Continue" button only if there are warnings
+    #if st.session_state['warnings_present']:
+        # if st.button("Acknowledge and Continue"):
+        #     st.session_state['acknowledged_warnings'] = True  # Acknowledge warnings
+
+    # Return the workbook after processing
     return workbook
 
-# Example usage within Streamlit
-if 'acknowledged_warnings' not in st.session_state:
-    st.session_state['acknowledged_warnings'] = False
 
-if not st.session_state['acknowledged_warnings']:
-    # Call your function here, assuming you have the 'workbook' and 'stream' variables set up
-    # format_non_pivot_table(workbook, stream)
-    pass  # Replace this with your actual function call
-else:
-    # Proceed with the rest of your Streamlit app
-    st.write("Warnings acknowledged. Continuing with the app...")
+
+
+
+
+
 
