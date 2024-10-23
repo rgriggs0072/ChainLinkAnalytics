@@ -112,6 +112,8 @@ def create_snowflake_connection():
         # Load Snowflake credentials from the secrets.toml file
         snowflake_creds = st.secrets["snowflake"]
 
+        st.write("What conn am I using? ", snowflake_creds)
+
         # Create a connection ID
         connection_id = str(uuid.uuid4())
 
@@ -433,6 +435,7 @@ GROUP BY
 
     # Format the Purchased Percentage column as percentage with two decimal places
     df["Purchased_Percentage"] = df["Purchased_Percentage"].apply(lambda x: f"{float(x):.2f}%")
+   
 
     return df
 
@@ -498,7 +501,7 @@ GROUP BY
 
 # Fetch the data from the function
 total_in_schematic, total_purchased, total_gaps, formatted_percentage = display_execution_summary()
-
+Revenue_missed = total_gaps * 40.19
 # Display the values in col1
 with col1:
     # Add styled title above the content in the second column
@@ -521,10 +524,13 @@ with col1:
             <p>Total Purchased: {total_purchased}</p>
             <p>Total Gaps: {total_gaps}</p>
             <p>Overall Purchased Percentage: {formatted_percentage}</p>
+            <p>Overall Missed Revenue: ${Revenue_missed: .2f}</p>
+
         </div>
         """,
         unsafe_allow_html=True
     )
+   
 
 # ===========================================================================================================================================
 # End block to Call display_execution_summary() to get the execution summary data and display it for the user in column 2

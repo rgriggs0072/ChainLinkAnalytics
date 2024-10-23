@@ -153,17 +153,7 @@ if uploaded_file:
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-            # Allow the user to discard the current upload if warnings are present
-            #if st.session_state['warnings_present'] and not st.session_state['acknowledged_warnings']:
-            # if st.button("Remove uploaded file and re-upload"):
-            #     print("did I click the remove button? ")
-            #     st.session_state['uploaded_file'] = None
-            #     st.session_state['acknowledged_warnings'] = False
-            #     st.session_state['warnings_present'] = False
-            #     st.session_state['file_uploader'] = None  # Clear the file uploader
-            #     print("what the hell is the file session state? ", st.session_state['uploaded_file'])
-            #     st.rerun()
-            # st.write("do we have a session state damn it?",st.session_state['file_uploaded'] )
+        
 
 # ===========================================================================================================
 # create code uploader in preparation to write to snowflake
@@ -191,7 +181,6 @@ if not options:
     st.warning("No options available. Please add options to the list.")
 else:
     # Create the dropdown in Streamlit
-
     selected_option = st.selectbox(':red[Select the Chain Distro Grid to upload to Snowflake]',
                                    options + ['Add new option...'], key="existing_chain_option")
 
@@ -216,7 +205,8 @@ else:
     else:
         # Display the selected option
         st.write(f"You selected: {selected_option}")
-    # create file uploader
+
+    # Create file uploader
     uploaded_files = st.file_uploader("Browse or select formatted Distribution Grid excel sheets", type=["xlsx"],
                                       accept_multiple_files=True)
 
@@ -225,22 +215,35 @@ for uploaded_file in uploaded_files:
     # Read Excel file into pandas ExcelFile object
     excel_file = pd.ExcelFile(uploaded_file)
 
-    ## Get sheet names from ExcelFile object
+    # Get sheet names from ExcelFile object
     sheet_names = excel_file.sheet_names
 
-    # Display DataFrame for each sheet in Streamlit
+    # Process each sheet in the Excel file
     for sheet_name in sheet_names:
         df = pd.read_excel(excel_file, sheet_name=sheet_name)
 
-    # #===========================================================================================================
-    # End of code to create code uploader in preparation to write to snowflake
-    # ==========================================================================================================
+        # Standardize column names to remove leading/trailing whitespace
+        df.columns = df.columns.str.strip()
 
-    # Write DataFrame to Snowflake on button click
-    button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
-    if st.button("Import Distro Grid into Snowflake", key=button_key):
-        with st.spinner('Uploading data to Snowflake ...'):
-            # Write DataFrame to Snowflake based on the selected store
+        # Validate chain_name in the uploaded file against the selected option
+        if 'CHAIN_NAME' in df.columns:
+            file_chain_name = df['CHAIN_NAME'].iloc[0].strip()  # Ensure there are no leading/trailing spaces
+            if file_chain_name.lower() != selected_option.lower():
+                st.error(f"Chain name in the file ({file_chain_name}) does not match the selected option ({selected_option}). Please correct the file or select the correct chain.")
+                continue  # Skip further processing for this file if chain names do not match
+        else:
+            st.error(f"'CHAIN_NAME' column not found in the uploaded file ({uploaded_file.name}). Please make sure the file has the correct format.")
+            continue
 
-            upload_distro_grid_to_snowflake(df, selected_option, update_spinner)
+        # Display DataFrame for each sheet in Streamlit
+        st.write(f"Sheet: {sheet_name} and Chain Selected is: {selected_option}")
+       #st.dataframe(df)
+
+        # Write DataFrame to Snowflake on button click
+        button_key = f"import_button_{uploaded_file.name}_{sheet_name}"
+        if st.button("Import Distro Grid into Snowflake", key=button_key):
+            with st.spinner('Uploading data to Snowflake ...'):
+                # Write DataFrame to Snowflake based on the selected store
+                upload_distro_grid_to_snowflake(df, selected_option, update_spinner)
+
 
