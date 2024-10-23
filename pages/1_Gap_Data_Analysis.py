@@ -287,55 +287,38 @@ if uploaded_file:
 
 def create_gap_report(conn, salesperson, chain_name, supplier):
     """
-    Retrieves data from a Snowflake view and creates a button to download the data as a CSV report.
+    Retrieves data from a Snowflake view and creates a button to download the data as an Excel report.
     """
-    # Execute the stored procedure without filters
+    # Execute the stored procedure to process the gap report
     cursor = conn.cursor()
     cursor.execute("CALL PROCESS_GAP_REPORT()")
     cursor.close()
 
-    # Execute SQL query and retrieve data from the Gap_Report view with filters
+    # Construct the SQL query with filters
+    query = "SELECT * FROM Gap_Report"
     if salesperson != "All":
-        query = f"SELECT * FROM Gap_Report WHERE SALESPERSON = '{salesperson}'"
+        query += f" WHERE SALESPERSON = '{salesperson}'"
         if chain_name != "All":
-            query += f" AND CHAIN NAME = '{chain_name}'"
+            query += f" AND CHAIN_NAME = '{chain_name}'"
             if supplier != "All":
                 query += f" AND SUPPLIER = '{supplier}'"
     elif chain_name != "All":
-        query = f"SELECT * FROM Gap_Report WHERE CHAIN_NAME = '{chain_name}'"
+        query += f" WHERE CHAIN_NAME = '{chain_name}'"
         if supplier != "All":
             query += f" AND SUPPLIER = '{supplier}'"
-    else:
-        if supplier != "All":
-            query = f"SELECT * FROM Gap_Report WHERE SUPPLIER = '{supplier}'"
-        else:
-            query = "SELECT * FROM Gap_Report"
+    elif supplier != "All":
+        query += f" WHERE SUPPLIER = '{supplier}'"
+
+    # Retrieve data into a DataFrame
     df = pd.read_sql(query, conn)
 
-    # Get the user's download folder
-    download_folder = os.path.expanduser(r"~\Downloads")
+    # Use BytesIO to save the DataFrame as an Excel file in memory
+    excel_stream = BytesIO()
+    df.to_excel(excel_stream, index=False, engine='openpyxl')
+    excel_stream.seek(0)
 
-    # Write the updated dataframe to a temporary file
-    temp_file_name = 'temp.xlsx'
+    return excel_stream
 
-    # Create the full path to the temporary file
-    #temp_file_path = os.path.join(download_folder, temp_file_name)
-    temp_file_path = "temp.xlsx"
-    #df.to_excel(temp_file_path, index=False)
-    #st.write(df)
-
-    df.to_excel(temp_file_path, index=False)  # Save the DataFrame to a temporary file
-
-
-    # # Create the full path to the temporary file
-    # temp_file_name = 'temp.xlsx'
-    # temp_file_path = os.path.join(download_folder, temp_file_name)
-
-    return temp_file_path  # Return the file path
-
-#====================================================================================================
-# Build sidebar button for creating gap report and call function to create the gap report
-#====================================================================================================
 # Load Snowflake credentials from the secrets.toml file
 snowflake_creds = st.secrets["snowflake"]
 
@@ -364,8 +347,7 @@ salesperson_options.insert(0, "All")
 chain_options.insert(0, "All")
 supplier_options.insert(0, "All")
 
-
-#  Create a form in the sidebar
+# Create a form in the sidebar
 with st.sidebar.form(key="Gap Report Report", clear_on_submit=True):
     # Select boxes for filters
     salesperson = st.selectbox("Filter by Salesperson", salesperson_options)
@@ -375,31 +357,21 @@ with st.sidebar.form(key="Gap Report Report", clear_on_submit=True):
     # Submit button
     submitted = st.form_submit_button("Generate Gap Report")
 
-# Define the df variable outside of the function
-df = None
-
-
-
-
 with st.sidebar:
-   # Call create_gap_report if form is submitted
-   if submitted:
+    # Generate the report if the form is submitted
+    if submitted:
         with st.spinner('Generating report...'):
-            temp_file_path = create_gap_report(conn, salesperson=salesperson, chain_name=chain_name, supplier=supplier)
-            with open(temp_file_path, 'rb') as f:
-                bytes_data = f.read()
-            today = datetime.datetime.today().strftime('%Y-%m-%d') # get current date in YYYY-MM-DD format
-            file_name = f"Gap_Report_{today}.xlsx" # insert current date into file name
+            excel_stream = create_gap_report(conn, salesperson=salesperson, chain_name=chain_name, supplier=supplier)
+            today = datetime.datetime.today().strftime('%Y-%m-%d')
+            file_name = f"Gap_Report_{today}.xlsx"
 
-            downloadcontainer = st.container()
-            with downloadcontainer:
-                st.download_button(label="Download Gap Report", data=bytes_data, file_name=file_name, mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                st.write("File will be downloaded to your local download folder")
-
-            container = st.container()
-            with container:
-                st.spinner('Generating report...')  # Display the spinner in the sidebar
-                #st.sidebar.dataframe(df)  # Display the dataframe in the sidebar
+            st.download_button(
+                label="Download Gap Report",
+                data=excel_stream,
+                file_name=file_name,
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            st.write("File will be downloaded to your local system.")
 
    
 
