@@ -78,61 +78,118 @@ def get_local_ip():
 # Function to upload Reset Schedule Data into Snowflake for all stores and chains
 # ====================================================================================================================
 
-def upload_reset_data(df, selected_chain): 
+def upload_reset_data(df, selected_chain):
     # Check for empty values in the CHAIN_NAME column and the STORE_NAME column
     if df['CHAIN_NAME'].isnull().any():
         st.warning("CHAIN_NAME field cannot be empty. Please provide a value for CHAIN_NAME empty cell and try again.")
     elif df['STORE_NAME'].isnull().any():
-        st.warning("STORE_NAME field cannot be empty. Please provide a value for the STORE_NAME empty cell and try again.")
+        st.warning(
+            "STORE_NAME field cannot be empty.  Please privide a value for the STORE_NAME empty cell and try again.")
+
     else:
         # Check if the selected chain matches the names in the CHAIN_NAME column
         selected_chain = selected_chain.upper()
         chain_name_matches = df['CHAIN_NAME'].str.upper().eq(selected_chain)
+        # st.write('what chain is it',selected_chain)
+        # Count the number of mismatches
         num_mismatches = len(chain_name_matches) - chain_name_matches.sum()
 
         if num_mismatches == 0:
-            # All chain names match, proceed with Snowflake upload
+            # All chain names match
+            # Continue with the Snowflake upload
             try:
+                # Load Snowflake credentials from the secrets.toml file
                 conn, connection_id = create_snowflake_connection()
+
+                
+
+                # Get User ID and local ip address to write to log
                 user_id = getpass.getuser()
                 local_ip = get_local_ip()
-                selected_option = st.session_state.selected_option
 
-                # Remove existing data for the selected chain
-                remove_query = f"DELETE FROM RESET_SCHEDULE WHERE CHAIN_NAME = '{selected_chain}'"
+                # Access the selected_option from the session state
+                selected_option = st.session_state.selected_option
+                # st.write(f"You selected who?: {selected_option}")
+
+                # Log the start of the SQL activity
+                description = f"Started {selected_option} delete from reset table"
+                create_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
+
+                # Remove data from the table where CHAIN_NAME is equal to selected_store
+                remove_query = f"""
+                DELETE FROM RESET_SCHEDULE
+                WHERE CHAIN_NAME = '{selected_chain}'
+                """
+
+                # Log the completion of the SQL activity
+                description = f"Completed {selected_option} delete from reset table"
+                # create_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
+
                 cursor = conn.cursor()
                 cursor.execute(remove_query)
                 cursor.close()
 
-                # Replace 'NAN' values with NULL and convert timestamp values to strings
+                # Write DataFrame to Snowflake
+                cursor = conn.cursor()
+
+                ## Replace 'NAN' values with NULL
                 df = df.replace('NAN', np.nan).fillna(value='', method=None)
+
+                ## Convert timestamp values to strings
                 df = df.astype({'RESET_DATE': str, 'TIME': str})
 
-                # Ensure all necessary columns are present in the DataFrame
+                # Log the start of the SQL activity
+                description = f"Started {selected_option} insert into reset table"
+               # create_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
+                df.reset_index(drop=True, inplace=True)
+                # Generate the SQL query for INSERT into the Reset_Schedule table
                 expected_columns = [
-                    'CHAIN_NAME', 'STORE_NUMBER', 'STORE_NAME', 'PHONE_NUMBER',
-                    'CITY', 'ADDRESS', 'STATE', 'COUNTY', 'TEAM_LEAD', 
-                    'RESET_DATE', 'TIME', 'STATUS', 'NOTES'
+                'CHAIN_NAME', 'STORE_NUMBER', 'STORE_NAME', 'PHONE_NUMBER',
+                'CITY', 'ADDRESS', 'STATE', 'COUNTY', 'TEAM_LEAD',
+                'RESET_DATE', 'TIME', 'STATUS', 'NOTES'
                 ]
-
-                # Ensure the DataFrame has all the expected columns
-                if not all(col in df.columns for col in expected_columns):
-                    st.error("The uploaded file is missing one or more required columns. Please check and try again.")
-                    return
-
-                # Insert data into RESET_SCHEDULE table
                 placeholders = ', '.join(['%s'] * len(expected_columns))
-                insert_query = f"INSERT INTO RESET_SCHEDULE ({', '.join(expected_columns)}) VALUES ({placeholders})"
+                insert_query = f"""
+                INSERT INTO RESET_SCHEDULE ({', '.join(expected_columns)})
+                VALUES ({placeholders})
+                """
 
-                cursor = conn.cursor()
-                cursor.executemany(insert_query, df[expected_columns].values.tolist())
+               # st.write("what is the query? ", df.values.tolist())
+               # st.write("what are the number of columns? ",df.columns )
+                # Log the completion of the SQL activity
+                description = f"Completed {selected_option} insert into reset table"
+               # create_log_entry(user_id, "SQL Activity", description, True, local_ip, selected_option)
+
+                # Execute the query with parameterized values
+             
+                cursor.executemany(insert_query, df.values.tolist())
+
+                
                 cursor.close()
+
+                # Commit the transaction
                 conn.commit()
 
+                # Log the successful completion of the SQL activity
+                create_log_entry(user_id, "SQL Activity", "Transaction committed", True, local_ip, selected_option)
+
                 st.success("Data has been successfully written to Snowflake.")
+            # except Exception as e:
             except snowflake.connector.errors.ProgrammingError as pe:
                 st.error(f"An error occurred while writing to Snowflake: {str(pe)}")
+
+                # Check if the error message contains the string indicating a date, time, or CHAIN_NAME format issue
+                if 'Date' in str(pe) and 'is not recognized' in str(pe):
+                    st.warning(
+                        "Invalid date format in the data. Please ensure all date values are formatted correctly.")
+                elif 'Time' in str(pe) and 'is not recognized' in str(pe):
+                    st.warning(
+                        "Invalid time format in the data. Please ensure all time values are formatted correctly.")
+                else:
+                    # Log the full error traceback for further investigation
+                    st.exception(pe)
             finally:
+                # Close the connection
                 if conn:
                     conn.close()
         else:
@@ -140,7 +197,6 @@ def upload_reset_data(df, selected_chain):
             st.warning(
                 f"The selected chain ({selected_chain}) does not match {num_mismatches} name(s) in the CHAIN_NAME column. "
                 "Please select the correct chain and try again.")
-
 # =============================================================================================================================
 # End Function to load data into Snowflake reset_schedule table for FoodMaxx
 # ============================================================================================================================ 
