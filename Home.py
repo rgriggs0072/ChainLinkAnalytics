@@ -112,7 +112,7 @@ def create_snowflake_connection():
         # Load Snowflake credentials from the secrets.toml file
         snowflake_creds = st.secrets["snowflake"]
 
-      #  st.write("What conn am I using? ", snowflake_creds)
+       
 
         # Create a connection ID
         connection_id = str(uuid.uuid4())
