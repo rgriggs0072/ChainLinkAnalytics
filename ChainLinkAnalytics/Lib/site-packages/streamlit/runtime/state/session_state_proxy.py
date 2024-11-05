@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations
+from typing import Any, Dict, Iterator, MutableMapping
 
-from typing import Any, Final, Iterator, MutableMapping
+from typing_extensions import Final
 
 from streamlit import logger as _logger
 from streamlit import runtime
 from streamlit.runtime.metrics_util import gather_metrics
-from streamlit.runtime.state.common import require_valid_user_key
 from streamlit.runtime.state.safe_session_state import SafeSessionState
-from streamlit.runtime.state.session_state import SessionState
+from streamlit.runtime.state.session_state import SessionState, require_valid_user_key
 from streamlit.type_util import Key
 
-_LOGGER: Final = _logger.get_logger(__name__)
+LOGGER: Final = _logger.get_logger(__name__)
 
 
 _state_use_warning_already_displayed: bool = False
@@ -48,10 +47,10 @@ def get_session_state() -> SafeSessionState:
         if not _state_use_warning_already_displayed:
             _state_use_warning_already_displayed = True
             if not runtime.exists():
-                _LOGGER.warning(
+                LOGGER.warning(
                     "Session state does not function when running a script without `streamlit run`"
                 )
-        return SafeSessionState(SessionState(), lambda: None)
+        return SafeSessionState(SessionState())
     return ctx.session_state
 
 
@@ -130,7 +129,7 @@ class SessionStateProxy(MutableMapping[Key, Any]):
         except KeyError:
             raise AttributeError(_missing_attr_error_message(key))
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Return a dict containing all session_state and keyed widget values."""
         return get_session_state().filtered_state
 

@@ -20,11 +20,15 @@ from io import BytesIO
 
 from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
 
-# Configure the logger
+# Keep your app's logger at INFO level
 logging.basicConfig(level=logging.INFO)
 db_logger = logging.getLogger(__name__)
 
+# Set Snowflake Connector's log level to WARNING to reduce its verbosity
+snowflake_logger = logging.getLogger("snowflake.connector")
+snowflake_logger.setLevel(logging.WARNING)
 # Set page to wide display to give more room
+
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed")
