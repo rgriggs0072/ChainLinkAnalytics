@@ -390,3 +390,66 @@ with file_container:
 
 #---------------------------------------------------------------------------------------------------------------------------------------
 
+# =====================================================================================================================
+# Query and Download Reset Schedule Data
+# =====================================================================================================================
+
+st.sidebar.markdown("<hr>", unsafe_allow_html=True)
+st.sidebar.subheader(":blue[Download Reset Schedule Data]")
+
+# Dropdown to select Chain Name
+if not options:
+    st.sidebar.warning("No chain options available. Please add options to the list.")
+else:
+    selected_chain = st.sidebar.selectbox("Select Chain Name for Reset Schedule", options, key="download_chain")
+
+# Query data and download button
+if selected_chain:
+    if st.sidebar.button("Fetch Reset Schedule Data"):
+        # Connect to Snowflake
+        try:
+            conn, connection_id = create_snowflake_connection()
+
+            # Query data from the RESET_SCHEDULE_VIEW based on the selected chain
+            query = f"""
+                SELECT * 
+                FROM RESET_SCHEDULE_VIEW
+                WHERE CHAIN_NAME = %s;
+            """
+            cursor = conn.cursor()
+            cursor.execute(query, (selected_chain,))
+            data = cursor.fetchall()
+
+            # Get column names
+            columns = [col[0] for col in cursor.description]
+
+            # Close the connection
+            cursor.close()
+            conn.close()
+
+            # Convert data to a DataFrame
+            if data:
+                df = pd.DataFrame(data, columns=columns)
+
+                # Create an Excel file in memory
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False, sheet_name="Reset_Schedule")
+                output.seek(0)
+
+                # Provide a download button
+                st.sidebar.download_button(
+                    label=f"Download {selected_chain} Reset Schedule",
+                    data=output,
+                    file_name=f"{selected_chain}_Reset_Schedule.xlsx",
+                    mime="application/vnd.ms-excel"
+                )
+            else:
+                st.sidebar.warning(f"No data found for chain: {selected_chain}")
+
+        except Exception as e:
+            st.sidebar.error(f"An error occurred: {str(e)}")
+
+# =====================================================================================================================
+# END of Query and Download Reset Schedule Data
+# =====================================================================================================================
