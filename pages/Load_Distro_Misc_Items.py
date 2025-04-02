@@ -16,7 +16,7 @@ from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
 from DG_Non_Pivot_Format import format_non_pivot_table
 from misc_distro_grid_uploader import update_spinner, upload_distro_grid_to_snowflake
 
-
+from Home import create_snowflake_connection
 
 # ===================== End Custom Imports ==========================================================================
 
@@ -56,32 +56,32 @@ st.markdown(
 # 11/28/2023 - Randy Griggs - Function to create connection to the database
 # ============================================================================================================================================================
 
-# Function to create and return a Snowflake connection object with logging
-def create_snowflake_connection():
-    try:
-        # Load Snowflake credentials from the secrets.toml file
-        snowflake_creds = st.secrets["snowflake"]
+# # Function to create and return a Snowflake connection object with logging
+# def create_snowflake_connection():
+#     try:
+#         # Load Snowflake credentials from the secrets.toml file
+#         snowflake_creds = st.secrets["snowflake"]
 
-        # Create a connection ID
-        connection_id = str(uuid.uuid4())
+#         # Create a connection ID
+#         connection_id = str(uuid.uuid4())
 
-        # Create and return a Snowflake connection object
-        conn = snowflake.connector.connect(
-            account=snowflake_creds["account"],
-            user=snowflake_creds["user"],
-            password=snowflake_creds["password"],
-            warehouse=snowflake_creds["warehouse"],
-            database=snowflake_creds["database"],
-            schema=snowflake_creds["schema"]
-        )
+#         # Create and return a Snowflake connection object
+#         conn = snowflake.connector.connect(
+#             account=snowflake_creds["account"],
+#             user=snowflake_creds["user"],
+#             password=snowflake_creds["password"],
+#             warehouse=snowflake_creds["warehouse"],
+#             database=snowflake_creds["database"],
+#             schema=snowflake_creds["schema"]
+#         )
 
-        return conn, connection_id
+#         return conn, connection_id
 
-    except snowflake.connector.errors.Error as e:
-        st.error(f"Error creating Snowflake connection: {str(e)}")
-        # Log the error or take appropriate action
-        log_error_info(str(e), connection_id)
-        return None, None  # Return None to indicate an error
+#     except snowflake.connector.errors.Error as e:
+#         st.error(f"Error creating Snowflake connection: {str(e)}")
+#         # Log the error or take appropriate action
+#         log_error_info(str(e), connection_id)
+#         return None, None  # Return None to indicate an error
 
 
 # ============================================================================================================================================================

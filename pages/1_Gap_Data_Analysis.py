@@ -21,6 +21,7 @@ import plotly.express as px
 import altair as alt
 import plotly.graph_objects as go
 from snowflake.connector import connect, Error
+from Home import create_snowflake_connection
 
 
 
@@ -59,21 +60,22 @@ st.markdown("<hr>", unsafe_allow_html=True)
 
 
 
-# Allow the user to select the environment
-ENVIRONMENT = st.selectbox(
-    'Select environment:',
-    ('PRODUCTION', 'TEST')
-    )
+# # Allow the user to select the environment
+# ENVIRONMENT = st.selectbox(
+#     'Select environment:',
+#     ('PRODUCTION', 'TEST')
+#     )
 
-# Set up a session state for storing table_name based on the environment
-if ENVIRONMENT == 'PRODUCTION':
-   st.session_state.table_name = 'SALES_REPORT'
-else:
-    st.session_state.table_name = 'TMP_TABLE'
+# # Set up a session state for storing table_name based on the environment
+# if ENVIRONMENT == 'PRODUCTION':
+#    st.session_state.table_name = 'SALES_REPORT'
+# else:
+#     st.session_state.table_name = 'TMP_TABLE'
 
-#st.write('you have selected the ' + ENVIRONMENT) # Use this line for testing which environment you are selecting
+# #st.write('you have selected the ' + ENVIRONMENT) # Use this line for testing which environment you are selecting
 
 
+conn, connection_id = create_snowflake_connection()
 
 
 def format_sales_report(workbook):
@@ -210,25 +212,25 @@ def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
 
 
  
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
+    # # Load Snowflake credentials from the secrets.toml file
+    # snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-    account=snowflake_creds["account"],
-    user=snowflake_creds["user"],
-    password=snowflake_creds["password"],
-    warehouse=snowflake_creds["warehouse"],
-    database=snowflake_creds["database"],
-    schema=snowflake_creds["schema"]
-    )
+    # # Establish a new connection to Snowflake
+    # conn = snowflake.connector.connect(
+    # account=snowflake_creds["account"],
+    # user=snowflake_creds["user"],
+    # password=snowflake_creds["password"],
+    # warehouse=snowflake_creds["warehouse"],
+    # database=snowflake_creds["database"],
+    # schema=snowflake_creds["schema"]
+    # )
     
     
     
  
     # write DataFrame to Snowflake
     cursor = conn.cursor()
-    sql_query = f"CREATE OR REPLACE TABLE {table_name} AS SELECT \
+    sql_query = f"CREATE OR REPLACE TABLE SALES_REPORT AS SELECT \
     CAST(STORE_NUMBER AS NUMBER) AS STORE_NUMBER, \
     CAST(TRIM(STORE_NAME) AS VARCHAR) AS STORE_NAME, \
     CAST(ADDRESS AS VARCHAR) AS ADDRESS, \
@@ -272,7 +274,7 @@ if uploaded_file:
     # write DataFrame to Snowflake on button click
     if st.button("Import into Snowflake"):
         with st.spinner('Uploading data to Snowflake ...'):
-            write_salesreport_to_snowflake(df, "COMPUTE_WH", "DATASETS", "DATASETS", st.session_state.table_name)
+            # write_salesreport_to_snowflake(df, "COMPUTE_WH", "DATASETS", "DATASETS", st.session_state.table_name)
 
 #=====================================================================================================
 # END Create uploader for formatted sales report create dataframe and call write to snowflake function
@@ -281,8 +283,6 @@ if uploaded_file:
 #===================================================================================================
 # Function to create the gap report from data pulled from snowflake and button to download gap report
 #=====================================================================================================
-
-
 
 
 def create_gap_report(conn, salesperson, chain_name, supplier):
@@ -319,18 +319,18 @@ def create_gap_report(conn, salesperson, chain_name, supplier):
 
     return excel_stream
 
-# Load Snowflake credentials from the secrets.toml file
-snowflake_creds = st.secrets["snowflake"]
+    # # Load Snowflake credentials from the secrets.toml file
+    # snowflake_creds = st.secrets["snowflake"]
 
-# Establish a new connection to Snowflake
-conn = snowflake.connector.connect(
-    account=snowflake_creds["account"],
-    user=snowflake_creds["user"],
-    password=snowflake_creds["password"],
-    warehouse=snowflake_creds["warehouse"],
-    database=snowflake_creds["database"],
-    schema=snowflake_creds["schema"]
-)
+    # # Establish a new connection to Snowflake
+    # conn = snowflake.connector.connect(
+    #     account=snowflake_creds["account"],
+    #     user=snowflake_creds["user"],
+    #     password=snowflake_creds["password"],
+    #     warehouse=snowflake_creds["warehouse"],
+    #     database=snowflake_creds["database"],
+    #     schema=snowflake_creds["schema"]
+    # )
 
 # Retrieve options from the database
 salesperson_options = pd.read_sql("SELECT DISTINCT SALESPERSON FROM Salesperson", conn)['SALESPERSON'].tolist()
@@ -390,14 +390,14 @@ with st.sidebar:
 #===================================================================================================
 
 # Establish a new connection to Snowflake
-conn = snowflake.connector.connect(
-    account=snowflake_creds["account"],
-    user=snowflake_creds["user"],
-    password=snowflake_creds["password"],
-    warehouse=snowflake_creds["warehouse"],
-    database=snowflake_creds["database"],
-    schema=snowflake_creds["schema"]
-)
+# conn = snowflake.connector.connect(
+#     account=snowflake_creds["account"],
+#     user=snowflake_creds["user"],
+#     password=snowflake_creds["password"],
+#     warehouse=snowflake_creds["warehouse"],
+#     database=snowflake_creds["database"],
+#     schema=snowflake_creds["schema"]
+# )
 
 # Retrieve data from your view
 query = "SELECT SUM(\"In_Schematic\") AS total_in_schematic, SUM(\"PURCHASED_YES_NO\") AS purchased, SUM(\"PURCHASED_YES_NO\") / COUNT(*) AS purchased_percentage FROM GAP_REPORT;"

@@ -12,6 +12,7 @@ def current_timestamp():
     return datetime.now()
 
 
+conn, connection_id = create_snowflake_connection()
 
 
 # --------------------------------------------------------------------------------------------------------------------
