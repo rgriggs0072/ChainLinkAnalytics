@@ -361,3 +361,13 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# --- Snowflake Key Pair Auth ---
+*.pem                          # RSA private/public keys
+**/rsa_private_key.pem         # Common filename
+**/rsa_public_key.pem
+keys/                          # Secure key folder (if you store them in a subfolder)
+
+
+# Streamlit Cloud secrets
+.streamlit/secrets.toml        # Don’t push secrets if you're managing them locally
