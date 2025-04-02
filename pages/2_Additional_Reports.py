@@ -5,7 +5,7 @@ from PIL import Image
 import openpyxl
 from io import BytesIO
 
-
+from Home import create_snowflake_connection
 
 
 #======================================================================================================================================
@@ -64,20 +64,23 @@ st.markdown("<hr>", unsafe_allow_html=True)
 
 # Load Product Data function to the product table within snowflake
 #======================================================================================================================================
+
+conn, connection_id = create_snowflake_connection()
+
 # Load Product Data function to the product table within Snowflake
 def fetch_product_analysis_data():
-    # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
+    # # Load Snowflake credentials from the secrets.toml file
+    # snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
+    # # Establish a new connection to Snowflake
+    # conn = snowflake.connector.connect(
+    #     account=snowflake_creds["account"],
+    #     user=snowflake_creds["user"],
+    #     password=snowflake_creds["password"],
+    #     warehouse=snowflake_creds["warehouse"],
+    #     database=snowflake_creds["database"],
+    #     schema=snowflake_creds["schema"]
+    # )
 
     # Execute the SQL query against the PRODUCT_ANALYSIS view and fetch the results into a DataFrame
     sql_query = """
