@@ -19,6 +19,7 @@ import uuid
 from io import BytesIO
 
 from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
+from cryptography.hazmat.primitives import serialization
 
 # Keep your app's logger at INFO level
 logging.basicConfig(level=logging.INFO)
@@ -110,34 +111,75 @@ col1, col2 = st.columns([50, 50], gap="medium")
 # 11/28/2023 - Randy Griggs - Function to create connection to the database
 # ============================================================================================================================================================
 
-# Function to create and return a Snowflake connection object with logging
-def create_snowflake_connection():
-    try:
-        # Load Snowflake credentials from the secrets.toml file
-        snowflake_creds = st.secrets["snowflake"]
+# # Function to create and return a Snowflake connection object with logging
+# def create_snowflake_connection():
+#     try:
+#         # Load Snowflake credentials from the secrets.toml file
+#         snowflake_creds = st.secrets["snowflake"]
 
        
 
-        # Create a connection ID
-        connection_id = str(uuid.uuid4())
+#         # Create a connection ID
+#         connection_id = str(uuid.uuid4())
 
-        # Create and return a Snowflake connection object
+#         # Create and return a Snowflake connection object
+#         conn = snowflake.connector.connect(
+#             account=snowflake_creds["account"],
+#             user=snowflake_creds["user"],
+#             password=snowflake_creds["password"],
+#             warehouse=snowflake_creds["warehouse"],
+#             database=snowflake_creds["database"],
+#             schema=snowflake_creds["schema"]
+#         )
+
+#         return conn, connection_id
+
+#     except snowflake.connector.errors.Error as e:
+#         st.error(f"Error creating Snowflake connection: {str(e)}")
+#         # Log the error or take appropriate action
+#         log_error_info(str(e), connection_id)
+#         return None, None  # Return None to indicate an error
+
+# Function to create and return a Snowflake connection object with logging
+def create_snowflake_connection():
+    connection_id = str(uuid.uuid4())
+
+    try:
+        creds = st.secrets["snowflake_secure"]
+
+        # Decode the base64 private key
+        private_key_bytes = base64.b64decode(creds["private_key_base64"])
+
+       # Load and decrypt the PEM key
+        p_key = serialization.load_pem_private_key(
+            private_key_bytes,
+            password=creds["private_key_passphrase"].encode()
+        )
+
+        private_key = p_key.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+
+        # Connect to Snowflake
         conn = snowflake.connector.connect(
-            account=snowflake_creds["account"],
-            user=snowflake_creds["user"],
-            password=snowflake_creds["password"],
-            warehouse=snowflake_creds["warehouse"],
-            database=snowflake_creds["database"],
-            schema=snowflake_creds["schema"]
+            user=creds["user"],
+            account=creds["account"],
+            private_key=private_key,
+            warehouse=creds["warehouse"],
+            database=creds["database"],
+            schema=creds["schema"],
+            role=creds["role"]
         )
 
         return conn, connection_id
 
-    except snowflake.connector.errors.Error as e:
+    except Exception as e:
         st.error(f"Error creating Snowflake connection: {str(e)}")
-        # Log the error or take appropriate action
         log_error_info(str(e), connection_id)
-        return None, None  # Return None to indicate an error
+        return None, None
+
 
 
 # ============================================================================================================================================================
