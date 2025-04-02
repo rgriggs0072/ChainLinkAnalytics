@@ -18,7 +18,7 @@ import logging
 import uuid
 from io import BytesIO
 
-from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
+#from streamlit.elements.image import MAXIMUM_CONTENT_WIDTH
 from cryptography.hazmat.primitives import serialization
 
 # Keep your app's logger at INFO level

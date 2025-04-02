@@ -57,7 +57,7 @@ st.markdown("""
 # Add horizontal line
 st.markdown("<hr>", unsafe_allow_html=True)
 
-
+conn, connection_id = create_snowflake_connection()
 
 
 # # Allow the user to select the environment
@@ -75,7 +75,6 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # #st.write('you have selected the ' + ENVIRONMENT) # Use this line for testing which environment you are selecting
 
 
-conn, connection_id = create_snowflake_connection()
 
 
 def format_sales_report(workbook):
@@ -274,7 +273,7 @@ if uploaded_file:
     # write DataFrame to Snowflake on button click
     if st.button("Import into Snowflake"):
         with st.spinner('Uploading data to Snowflake ...'):
-            # write_salesreport_to_snowflake(df, "COMPUTE_WH", "DATASETS", "DATASETS", st.session_state.table_name)
+            write_salesreport_to_snowflake(df, "COMPUTE_WH", "DATASETS", "DATASETS", st.session_state.table_name)
 
 #=====================================================================================================
 # END Create uploader for formatted sales report create dataframe and call write to snowflake function
@@ -283,6 +282,8 @@ if uploaded_file:
 #===================================================================================================
 # Function to create the gap report from data pulled from snowflake and button to download gap report
 #=====================================================================================================
+
+
 
 
 def create_gap_report(conn, salesperson, chain_name, supplier):
@@ -319,18 +320,18 @@ def create_gap_report(conn, salesperson, chain_name, supplier):
 
     return excel_stream
 
-    # # Load Snowflake credentials from the secrets.toml file
-    # snowflake_creds = st.secrets["snowflake"]
+# # Load Snowflake credentials from the secrets.toml file
+# snowflake_creds = st.secrets["snowflake"]
 
-    # # Establish a new connection to Snowflake
-    # conn = snowflake.connector.connect(
-    #     account=snowflake_creds["account"],
-    #     user=snowflake_creds["user"],
-    #     password=snowflake_creds["password"],
-    #     warehouse=snowflake_creds["warehouse"],
-    #     database=snowflake_creds["database"],
-    #     schema=snowflake_creds["schema"]
-    # )
+# # Establish a new connection to Snowflake
+# conn = snowflake.connector.connect(
+#     account=snowflake_creds["account"],
+#     user=snowflake_creds["user"],
+#     password=snowflake_creds["password"],
+#     warehouse=snowflake_creds["warehouse"],
+#     database=snowflake_creds["database"],
+#     schema=snowflake_creds["schema"]
+# )
 
 # Retrieve options from the database
 salesperson_options = pd.read_sql("SELECT DISTINCT SALESPERSON FROM Salesperson", conn)['SALESPERSON'].tolist()
@@ -441,14 +442,10 @@ for i in range(len(fig.data)):
 col1, col2  = st.columns(2)
 
 with col1:
-    container = st.container()
-    with container:
-        st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="gap_chart_left")
 
 with col2:
-    container = st.container()
-    with container:
-        st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="gap_chart_right")
 
    
 
