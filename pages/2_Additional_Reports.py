@@ -154,17 +154,17 @@ if st.button("Fetch Product Analysis Pivot Data"):
 
 def fetch_schematic_summary_data():
     # Load Snowflake credentials from the secrets.toml file
-    snowflake_creds = st.secrets["snowflake"]
+    # snowflake_creds = st.secrets["snowflake"]
 
-    # Establish a new connection to Snowflake
-    conn = snowflake.connector.connect(
-        account=snowflake_creds["account"],
-        user=snowflake_creds["user"],
-        password=snowflake_creds["password"],
-        warehouse=snowflake_creds["warehouse"],
-        database=snowflake_creds["database"],
-        schema=snowflake_creds["schema"]
-    )
+    # # Establish a new connection to Snowflake
+    # conn = snowflake.connector.connect(
+    #     account=snowflake_creds["account"],
+    #     user=snowflake_creds["user"],
+    #     password=snowflake_creds["password"],
+    #     warehouse=snowflake_creds["warehouse"],
+    #     database=snowflake_creds["database"],
+    #     schema=snowflake_creds["schema"]
+    # )
 
     # Execute the SQL query against the schematic_summary view and fetch the results into a DataFrame
     sql_query = """
