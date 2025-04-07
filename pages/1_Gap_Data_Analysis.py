@@ -60,19 +60,19 @@ st.markdown("<hr>", unsafe_allow_html=True)
 conn, connection_id = create_snowflake_connection()
 
 
-# # Allow the user to select the environment
-# ENVIRONMENT = st.selectbox(
-#     'Select environment:',
-#     ('PRODUCTION', 'TEST')
-#     )
+# Allow the user to select the environment
+ENVIRONMENT = st.selectbox(
+    'Select environment:',
+    ('PRODUCTION', 'TEST')
+    )
 
-# # Set up a session state for storing table_name based on the environment
-# if ENVIRONMENT == 'PRODUCTION':
-#    st.session_state.table_name = 'SALES_REPORT'
-# else:
-#     st.session_state.table_name = 'TMP_TABLE'
+# Set up a session state for storing table_name based on the environment
+if ENVIRONMENT == 'PRODUCTION':
+   st.session_state.table_name = 'SALES_REPORT'
+else:
+    st.session_state.table_name = 'TMP_TABLE'
 
-# #st.write('you have selected the ' + ENVIRONMENT) # Use this line for testing which environment you are selecting
+#st.write('you have selected the ' + ENVIRONMENT) # Use this line for testing which environment you are selecting
 
 
 
