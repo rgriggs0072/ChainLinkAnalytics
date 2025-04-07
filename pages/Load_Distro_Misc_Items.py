@@ -21,6 +21,24 @@ from Home import create_snowflake_connection
 # ===================== End Custom Imports ==========================================================================
 
 
+#======================================================================================================================================
+# Set page to always show in wide format
+st.set_page_config(layout="wide")
+padding_top = 10
+
+#======================================================================================================================================  
+# deals with padding for page
+
+padding = 0
+st.markdown(f""" <style>
+    .reportview-container .main .sidebar=content{{
+        padding-top: {0}rem;
+        padding-right: {padding}rem;
+        padding-left: {padding}rem;
+        padding-bottom: {padding}rem;
+    }} </style> """, unsafe_allow_html=True)
+
+#======================================================================================================================================
 
 
 
