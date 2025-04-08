@@ -267,7 +267,7 @@ def log_error_info(error_message, connection_id):
         # Log the error event
         event_time = datetime.now()
         event_type = "Error"
-        username = st.secrets["snowflake"]["user"]
+        username = st.secrets["snowflake_secure"]["user"]
 
         cursor.execute("""
             INSERT INTO CONNECTION_LOG 
