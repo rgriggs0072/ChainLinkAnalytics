@@ -1,4 +1,4 @@
-# Import required libraries
+﻿# Import required libraries
 from cgitb import text
 from itertools import chain
 from pickle import TRUE
@@ -196,55 +196,49 @@ if uploaded_file is not None:
 # Function to write sales report data to snowflake
 #=====================================================================================================
 
-def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
-    
-    
-    # read Excel file into pandas DataFrame
-    df = pd.read_excel(uploaded_file)
-    
-   
-    # # replace NaN values with "NULL"
-    # df.fillna(value=np.nan, inplace=True)
-    df.fillna(value="NULL", inplace=True)
-    
+def write_salesreport_to_snowflake(df, table_name):
+    # Establish Snowflake connection
+    conn, connection_id = create_snowflake_connection()
+    if not conn:
+        st.error("❌ Snowflake connection failed.")
+        return
 
+    try:
+        # Clean DataFrame: replace NaN with "NULL" (or None if you prefer Snowflake NULL)
+        df.fillna("NULL", inplace=True)
 
+        # Extract connection info dynamically
+        database = conn.database
+        schema = conn.schema
 
- 
-    # # Load Snowflake credentials from the secrets.toml file
-    # snowflake_creds = st.secrets["snowflake"]
+        # Prepare the SQL CREATE OR REPLACE statement dynamically
+        sql_query = f"""
+        CREATE OR REPLACE TABLE {database}.{schema}.{table_name} AS
+        SELECT
+            CAST(STORE_NUMBER AS NUMBER) AS STORE_NUMBER,
+            CAST(TRIM(STORE_NAME) AS VARCHAR) AS STORE_NAME,
+            CAST(ADDRESS AS VARCHAR) AS ADDRESS,
+            CAST(SALESPERSON AS VARCHAR) AS SALESPERSON,
+            CAST(PRODUCT_NAME AS VARCHAR) AS PRODUCT_NAME,
+            CAST(UPC AS NUMERIC) AS UPC,
+            CAST(PURCHASED_YES_NO AS NUMERIC) AS PURCHASED_YES_NO
+        FROM VALUES
+        {', '.join([str(tuple(row)) for row in df.itertuples(index=False, name=None)])}
+        AS tmp(STORE_NUMBER, STORE_NAME, ADDRESS, SALESPERSON, PRODUCT_NAME, UPC, PURCHASED_YES_NO);
+        """
 
-    # # Establish a new connection to Snowflake
-    # conn = snowflake.connector.connect(
-    # account=snowflake_creds["account"],
-    # user=snowflake_creds["user"],
-    # password=snowflake_creds["password"],
-    # warehouse=snowflake_creds["warehouse"],
-    # database=snowflake_creds["database"],
-    # schema=snowflake_creds["schema"]
-    # )
-    
-    
-    
- 
-    # write DataFrame to Snowflake
-    cursor = conn.cursor()
-    sql_query = f"CREATE OR REPLACE TABLE SALES_REPORT AS SELECT \
-    CAST(STORE_NUMBER AS NUMBER) AS STORE_NUMBER, \
-    CAST(TRIM(STORE_NAME) AS VARCHAR) AS STORE_NAME, \
-    CAST(ADDRESS AS VARCHAR) AS ADDRESS, \
-    CAST(SALESPERSON AS VARCHAR) AS SALESPERSON, \
-    CAST(PRODUCT_NAME AS VARCHAR) AS PRODUCT_NAME, \
-    CAST(UPC AS NUMERIC) AS UPC, \
-    CAST(PURCHASED_YES_NO AS NUMERIC) AS PURCHASED_YES_NO \
-    FROM (VALUES {', '.join([str(tuple(df.iloc[i].fillna(np.nan).values)) for i in range(len(df))])}) \
-    AS tmp(STORE_NUMBER, STORE_NAME, ADDRESS, SALESPERSON, PRODUCT_NAME, UPC, PURCHASED_YES_NO);"
+        # Execute SQL
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        conn.commit()
 
-    #st.write(sql_query)  # print the SQL query
-    cursor.execute(sql_query)
-    cursor.close()
-    conn.close()
-    st.write("Data has been imported into Snowflake table! ",st.session_state.table_name)
+        st.success(f"✅ Data has been imported into Snowflake table: {database}.{schema}.{table_name}")
+
+    except Exception as e:
+        st.error(f"❌ Failed to import data into Snowflake. Error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
@@ -258,22 +252,14 @@ def write_salesreport_to_snowflake(df, warehouse, database, schema, table_name):
 # create file uploader
 uploaded_file = st.file_uploader(":red[UPLOAD CURRENT SALES REPORT AFTER IT HAS BEEN FORMATED]", type=["xlsx"])
 
-# check if file was uploaded
 if uploaded_file:
-    # read Excel file into pandas DataFrame
     df = pd.read_excel(uploaded_file)
-    print(df.columns)
-    # display DataFrame in Streamlit
     st.dataframe(df)
 
-    # get warehouse and schema name from user
-   
-    #print(df.columns)
-
-    # write DataFrame to Snowflake on button click
     if st.button("Import into Snowflake"):
         with st.spinner('Uploading data to Snowflake ...'):
-            write_salesreport_to_snowflake(df, "COMPUTE_WH", "DATASETS", "DATASETS", st.session_state.table_name)
+            write_salesreport_to_snowflake(df, st.session_state.table_name)
+
 
 #=====================================================================================================
 # END Create uploader for formatted sales report create dataframe and call write to snowflake function
