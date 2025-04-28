@@ -23,7 +23,7 @@ import plotly.graph_objects as go
 from snowflake.connector import connect, Error
 from Home import create_snowflake_connection
 
-
+# Had to push a rebuild
 
 # Displaying images on the front end
 from PIL import Image
