@@ -149,7 +149,7 @@ if uploaded_file:
                 st.download_button(
                     label="Download formatted spreadsheet",
                     data=stream,
-                    file_name="formatted_spreadsheet.xlsx",
+                    file_name=f"{selected_option}_formatted_spreadsheet.xlsx",
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
